@@ -1,0 +1,9 @@
+<app-navigator></app-navigator>
+<main>
+    <app-sidebar></app-sidebar>
+    <div class="container">
+        <app-loading *ngIf="isLoading"></app-loading>
+        <router-outlet />
+    </div>
+</main>
+<app-footer></app-footer>

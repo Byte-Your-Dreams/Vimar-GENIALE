@@ -1,0 +1,27 @@
+<footer class="footer">
+  <div class="sureLogout">
+    <div class="logoutContainer">
+      <p>Sei sicuro di uscire?</p>
+      <div class="linkInOut">
+        <a (click)="onLogout()">Si</a>
+        <a (click)="closeWindow()">No</a>
+      </div>
+    </div>
+  </div>
+  <ul class="footLinks">
+    <li class="separator"></li> 
+    <li class="separator" *ngIf="loginStatus"></li>
+    <li *ngIf="!loginStatus">
+      <a (click)="navigateToLoginOrHome()" class="footerLink">
+        {{ linkLabel }}
+      </a>
+    </li>
+    <li *ngIf="loginStatus">
+      <a (click)="showLogout()" class="footerLink">
+        Logout
+      </a>
+    </li>
+    <li>
+    </li>
+  </ul>
+</footer>

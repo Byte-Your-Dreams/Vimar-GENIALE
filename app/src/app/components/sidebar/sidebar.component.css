@@ -1,0 +1,158 @@
+/* Stile per il contenitore della sidebar */
+#sidebar {
+  width: 16em;
+  /* TODO */
+  background-color: #333333;
+  color: #ecf0f1;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  height: 89vh;
+  position: fixed;
+  overflow-y: auto;
+}
+
+.navLink {
+  margin: 0 15px;
+  color: #E0E0E0;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: normal;
+  position: relative;
+  cursor: pointer;
+}
+
+/* Stile per la lista delle chat */
+.chatContainer {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  margin-top: 0.75em;
+}
+
+/* Stile per ogni elemento della lista */
+.chatContainer li {
+  margin-bottom: 0.2em;
+  border-radius: 1em;
+}
+
+/* Stile per il contenitore di ogni chat */
+.chatID {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-radius: 1em;
+  transition: background-color 0.3s;
+}
+
+li.selected {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.chatID:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Stile per il link del titolo della chat */
+.chatID a {
+  color: #ecf0f1;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.chatID a:hover {
+  text-decoration: underline;
+}
+
+/* Stile per il pulsante di eliminazione della chat */
+.deleteChat {
+  display: none;
+}
+
+li.selected {
+  text-decoration: underline;
+}
+
+/* Togliere .selected? */
+li.selected .deleteChat {
+  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2em;
+  border-radius: 1em;
+  background-color: #e74c3c;
+  border: none;
+  color: #ecf0f1;
+  padding: 0.4em;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #c0392b;
+  }
+}
+
+/* Togliere? */
+.chatID .selected button.deleteChat {
+  display: block;
+}
+
+/* Stile per il pulsante di nuova chat */
+#newChat {
+  width: 100%;
+  background-color: #FFD700;
+  border: none;
+  color: #555555;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 1em;
+
+  &:hover {
+    background-color: #e5c200;
+  }
+}
+
+.sidebarError {
+  color: #ecf0f1;
+  background-color: #c0392b;
+  font-size: 0.8em;
+  margin-top: 1em;
+  padding: 0.5em;
+  text-align: center;
+  border-radius: 5px;
+}
+
+#dashLink {
+  position: absolute;
+  bottom: 3em;
+  font-size: 1em;
+  cursor: pointer;
+  text-decoration: underline;
+  color: #e1c318;
+}
+
+@media (max-width: 980px) {
+
+  /* Stili per mobile */
+  #sidebar {
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    width: 60%;
+    border-right: 2px solid #e5c200;
+    transition: transform 0.3s ease-out;
+    transform: translateX(0);
+  }
+
+  #sidebar.hidden {
+    transform: translateX(-110%);
+
+  }
+
+  .sidebarError {
+    font-size: 1em;
+  }
+}

@@ -1,0 +1,30 @@
+
+<div class="container">
+    <form (submit)="handleLogin($event)" class="loginForm">
+      <h1>Login</h1>
+      <p *ngIf="error" class="error">{{ error }}</p>
+      <label for="username">Email</label>
+      <input
+        type="email"
+        placeholder="email"
+        [(ngModel)]="email"
+        name="email"
+        class="input"
+        required="required"
+      />
+      <label for="password">Password</label>
+      <input
+        type="password"
+        placeholder="Password"
+        [(ngModel)]="password"
+        name="password"
+        class="input"
+        required="required"
+      />
+      
+      <button type="submit" class="button">Login</button>
+    </form>
+    <div class="backContainer">
+      <p><a (click)="navigateToHome()" class="navLoginLink">Torna</a> alla pagina iniziale</p>
+    </div>
+  </div>

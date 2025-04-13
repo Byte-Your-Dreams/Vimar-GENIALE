@@ -1,0 +1,63 @@
+{
+  "users": {
+    "admin": {
+      "username": "admin@placeholder.com",
+      "email": "admin@placeholder.com",
+      "password": "password"
+    },
+    "invalid": {
+      "username": "invaliduser@example.com",
+      "email": "invaliduser@example.com",
+      "password": "wrongpassword"
+    }
+  },
+  "messages": {
+    "standard": "Test message from Cypress",
+    "persistent": "Persistent message test",
+    "feedback": "Test feedback message",
+    "special": "Special chars: !@#$%^&*()_+{}|:\"<>?~`-=[]\\;',./",
+    "forbidden": "test cazzo forbidden word"
+  },
+  "selectors": {
+    "chat": {
+      "header": ".chat-header",
+      "messages": ".chat-messages",
+      "userMessage": ".user-message",
+      "botMessage": ".bot-message",
+      "noConversation": ".no-conversation p",
+      "deleteButton": ".deleteChat",
+      "newChatButton": "#newChat"
+    },
+    "messagebar": {
+      "inputField": ".input-field",
+      "sendButton": ".send-button",
+      "charCount": ".char-count",
+      "errorMessage": ".error-message"
+    },
+    "sidebar": {
+      "container": "#sidebar",
+      "chatContainer": ".chatContainer",
+      "signInOutButton": ".signInOutButton"
+    },
+    "navbar": {
+      "container": ".nav",
+      "title": ".navTitle",
+      "logo": ".logo"
+    },
+    "login": {
+      "emailInput": "[type=\"email\"]",
+      "passwordInput": "[type=\"password\"]",
+      "loginButton": ".button"
+    },
+    "feedback": {
+      "thumbsUp": ".thumbs-up",
+      "thumbsDown": ".thumbs-down",
+      "dialogTitle": ".dialog-title",
+      "textarea": "textarea",
+      "submitButton": "button:contains(\"Invia\")"
+    }
+  },
+  "api": {
+    "supabaseUrl": "https://vqgvzelfzrmefuypovhq.supabase.co/auth/v1/token?grant_type=password"
+  }
+}

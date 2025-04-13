@@ -1,0 +1,40 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 89vh;
+}
+
+app-navigator {
+    flex: none;
+    width: 100%;
+}
+
+main {
+    display: flex;
+    margin-top: 100px;
+}
+
+
+app-sidebar {
+    flex: 1;
+    height: 89vh;
+}
+
+.container {
+    flex: 3;
+}
+
+app-footer {
+    /* position: absolute; */
+    bottom: 0;
+    width: 100%;
+    /* max-width: 1024px; */
+}
+
+@media (max-width: 980px) {
+    /* Stili per mobile */
+    app-sidebar {
+        flex: none;
+    }
+  
+  }

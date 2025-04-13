@@ -1,0 +1,88 @@
+.footer {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  background-color: rgb(40,40,40);
+  color: #e1c318;
+  padding: 1em;
+  bottom: 0;
+  width: 100%;
+  height: 1em;
+  border-top: 1px solid #e1c318;
+}
+
+.footerLink {
+  color: #e1c318;
+  padding: 0.5em;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  text-decoration: underline;
+  font-size: 0.8em;
+}
+
+.footLinks li {
+  cursor: pointer;
+  list-style: none;
+}
+
+.sureLogout {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top:0;
+  right: 0;
+  color: #ffff; 
+  background-color: rgba(40,40,40, 0.95);
+  /* z-index: 1000; */
+}
+
+.logoutContainer {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 15em;
+  height: 10em;
+  border-radius: 0.2em;
+  border: 2px solid #e1c318; 
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  
+}
+
+.linkInOut {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  text-align: center;
+}
+
+
+.linkInOut a {
+  background-color: #e1c318;
+  color: rgb(40,40,40);
+  width: 3.5em;
+  height: 1.5em;
+  border-radius: 0.1em;
+  cursor: pointer;
+  margin-top: 1em;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.sureLogout.showLogout {
+  display: block;
+}
+
+.sureLogout.dontShowLogout {
+  display: none;
+}
+
+

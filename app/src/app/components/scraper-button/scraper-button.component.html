@@ -1,0 +1,15 @@
+<div class="scraper-button-container">
+  <button 
+    class="update-button" 
+    (click)="startScraper()" 
+    [disabled]="isLoading">
+    Aggiorna Dati
+  </button>
+  
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-bar">
+      <div class="loading-progress"></div>
+    </div>
+    <p class="loading-text">Aggiornamento dati in corso...</p>
+  </div>
+</div>

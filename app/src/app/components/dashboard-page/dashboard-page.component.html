@@ -1,0 +1,33 @@
+<div id="dashboard" class="dashboard">
+  <h1 class="title">Pannello di Controllo</h1>
+  
+  <app-scraper-button></app-scraper-button>
+  
+  <div class="gridContainer">
+    <div class="card">
+      <h2>Andamento generale</h2>
+      <canvas id="line-chart"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>Numero di messaggi per settimana</h2>
+      <canvas id="bar-chart"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>Numero messaggi feedback</h2>
+      <canvas id="pie-chart"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>Statistiche dei messaggi</h2>
+      <p>Numero medio di parole per richiesta: {{ averageWords }}</p>
+      <p>Prodotti più cercati:</p>
+      <ul>
+        <li *ngFor="let word of wordCounts">
+          {{ word.word }}
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

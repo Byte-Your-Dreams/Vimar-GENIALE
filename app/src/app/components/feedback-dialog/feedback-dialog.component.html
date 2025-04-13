@@ -1,0 +1,13 @@
+<div class="dialog-content">
+  <div class="feedback-form-field">
+    <label for="feedback">
+      {{ isPositive ? 'Cosa ti è piaciuto?' : 'Cosa possiamo migliorare?' }}
+    </label>
+    <textarea id="feedback" [(ngModel)]="feedback" required="required"></textarea>
+    <p *ngIf="!feedback" class="error-message">Per poter inviare un feedback è necessario fornire una motivazione</p>
+  </div>
+</div>
+<div class="dialog-actions">
+  <button (click)="onNoClick()">Annulla</button>
+  <button class="submit-button" [disabled]="!feedback" (click)="onSubmit()">Invia</button>
+</div>

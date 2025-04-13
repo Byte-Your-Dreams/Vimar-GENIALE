@@ -1,0 +1,18 @@
+<!-- src/app/components/navigator/navigator.component.html -->
+<nav class="nav">
+  <button class="button-burger" (click)="toggleMenu()" aria-label="Interagisci con il menu" [attr.aria-expanded]="isMenuOpen" aria-controls="sidebar">
+    <span class="bar"></span>
+    <span class="bar"></span>
+    <span class="bar"></span>
+  </button>
+
+  <!-- <a class="goHome" (click)="navigateToHome()" *ngIf="dashRoute">
+    <div class="arrowLeft"></div>
+  </a> -->
+
+  <a (click)="navigateToHome()" class="logo">
+    <img src="assets/img/image.png" alt="logo" class="logoImage" />
+  </a>
+  <h1 class="navTitle">Vimar GEN<span class="IA">IA</span>LE</h1>
+
+</nav>

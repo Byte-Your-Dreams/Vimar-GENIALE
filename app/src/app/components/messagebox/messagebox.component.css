@@ -1,0 +1,104 @@
+.message-bar {
+  padding: 0.8em;
+  background-color: rgb(40, 40, 40);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color); 
+  border-radius: 3em;
+  margin-bottom: 0.5em;
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.input-field {
+  flex: 1;
+  padding: 1.8em;
+  border: 2px solid #656464;
+  border-radius: 1em;
+  font-size: 1em;
+  line-height: 1.5;
+  background-color: rgb(53, 53, 53);
+  color: rgb(230,220,220);
+
+  &:focus {
+    outline: none;
+    border-color: #ffd700;
+  }
+
+  &:placeholder {
+    color: #999;
+    opacity: 1;
+  }
+}
+
+.input-field.redBorder {
+  border: 2px solid #c0392b;
+}
+
+.button-container {
+  padding: 1em;
+  text-align: center;
+}
+
+.char-count {
+  font-size: 0.8em;
+  text-align: center;
+  color: #ffffff;
+  padding: 5px;
+  z-index: 10;
+}
+
+.send-button {
+  width: 3.5em;
+  height: 3.5em;
+  background-color: #ffd700;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 1em;
+  cursor: pointer;
+  fill: #f9f9f9;
+  padding: 0.5em;
+  &:hover:not(:disabled),
+  &:focus:not(:disabled) {
+    background-color: #e5c200;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.50;
+    background-color: #999;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.info-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.5rem;
+}
+
+.error-message {
+  color: #c0392b;
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  &::before {
+    content: '⚠️';
+    display: inline-block;
+    margin-right: 0.25rem;
+  }
+}
