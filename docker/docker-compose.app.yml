@@ -1,0 +1,14 @@
+services:
+  angular-app:
+    container_name: angular-app
+    build:
+      context: ../app
+    restart: always
+    ports:
+      - 4200:4200
+    networks:
+      - vimar_net
+
+networks:
+  vimar_net:
+    external: true
