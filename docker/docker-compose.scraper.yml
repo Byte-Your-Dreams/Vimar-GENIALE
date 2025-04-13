@@ -1,0 +1,30 @@
+name: scraper
+
+services:
+  scrapy:
+    container_name: scraper
+    build: ../Scraper
+    volumes:
+      - ../Scraper/:/usr/src/app/Scraper
+    ports: 
+      - 6800:6800
+    environment:
+      SUPABASE_URL: http://kong:8000
+      SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+
+    command: >
+      /bin/sh -c "
+      scrapyd &
+      sleep 5 &&
+      if [ ! -f /usr/src/app/Scraper/deploy_done ]; then
+        scrapyd-deploy default -p Vimar &&
+        touch /usr/src/app/Scraper/deploy_done;
+      fi &&
+      tail -f /dev/null
+      "
+    networks:
+        - vimar_net
+
+networks:
+  vimar_net:
+    external: true
