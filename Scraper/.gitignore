@@ -1,0 +1,7 @@
+**/__pycache__/*
+**/dbs/
+**/eggs/
+**/items/
+**/logs/
+/deploy_done
+**/.vscode/
