@@ -1,0 +1,5 @@
+/volumes/db/data
+/volumes/storage
+/volumes/ollama
+.env
+*.env
