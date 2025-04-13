@@ -133,9 +133,9 @@ services:
 
   ## Secure Realtime routes
   - name: realtime-v1-ws
-    _comment: 'Realtime: /realtime/v1/* -> ws://realtime:4000/socket/*'
+    _comment: 'Realtime: /realtime/v1/* -> wss://realtime:4000/socket/*'
     url: http://realtime-dev.supabase-realtime:4000/socket
-    protocol: ws
+    protocol: wss
     routes:
       - name: realtime-v1-ws
         strip_path: true
@@ -153,7 +153,7 @@ services:
             - admin
             - anon
   - name: realtime-v1-rest
-    _comment: 'Realtime: /realtime/v1/* -> ws://realtime:4000/socket/*'
+    _comment: 'Realtime: /realtime/v1/* -> wss://realtime:4000/socket/*'
     url: http://realtime-dev.supabase-realtime:4000/api
     protocol: http
     routes:
