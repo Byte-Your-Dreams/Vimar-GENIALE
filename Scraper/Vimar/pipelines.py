@@ -66,7 +66,7 @@ class DBPipeline(object):
             
 
     def _process_new_pdf(self, pdf, item_id, spider):
-        # self._makeOcr(pdf)
+        self._makeOcr(pdf)
         
         file = FilePdf(f'pdfs/{pdf["path"]}', pdf['url'])
         response: DbUploadOperationResponse = self.uploadFileUseCase.upload_file(file)
