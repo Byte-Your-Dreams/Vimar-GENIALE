@@ -97,8 +97,11 @@ export class MessageboxComponent {
     
     // Only check forbidden words if they've been loaded (browser environment)
     if (this.forbiddenWords.length > 0) {
-      const forbiddenRegex = new RegExp(this.forbiddenWords.join("|"), "i");
-      this.containsForbiddenWords = forbiddenRegex.test(value);
+      // Split the text into words and check each word against forbidden words
+      const words = value.toLowerCase().split(/\s+/);
+      this.containsForbiddenWords = words.some((word: string) => 
+        this.forbiddenWords.includes(word)
+      );
       
       if (isPlatformBrowser(this.platformId)) {
         const inputChat = document.querySelector('.input-field');
