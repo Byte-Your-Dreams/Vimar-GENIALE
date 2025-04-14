@@ -43,7 +43,8 @@ case "$1" in
         ;; 
     down)
         cd ./docker
-        docker-compose -f docker-compose.supabase.yml down 
+        docker-compose -f docker-compose.app.yml down
+        docker-compose -f docker-compose.scraper.yml down
         case "$2" in 
             nvidia) 
                 docker-compose -f docker-compose.ollama.nvidia.yml down
@@ -56,8 +57,7 @@ case "$1" in
                 exit 1 
                 ;;
         esac 
-        docker-compose -f docker-compose.scraper.yml down
-        docker-compose -f docker-compose.app.yml down
+        docker-compose -f docker-compose.supabase.yml down 
         ;;
     reset)
         cd ./docker
