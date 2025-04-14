@@ -115,5 +115,3 @@ Deno.serve(async (req) => {
         return new Response('Internal Server Error', { status: 500 });
     }
 })
-
-// curl -i --location --request POST 'http://localhost:8000/functions/v1/test' --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q'  --header 'Content-Type: application/json'   --data '{"question":"Potenza dissipata ","id":"f3ee229c-d52e-4fce-a291-3e69590e5603","chat_id":"3f178755-50e2-4d56-a75f-f3b565ff12b2"}'
