@@ -1,0 +1,26 @@
+name: ollama
+
+services:
+  ollama:
+    image: ollama/ollama:0.6.0
+    ports:
+        - 11434:11434
+    volumes:
+        - ./volumes/ollama:/root/.ollama
+        - ./entrypoint.sh:/entrypoint.sh
+    container_name: ollama
+    pull_policy: always
+    tty: true
+    restart: always
+    entrypoint: ["/usr/bin/bash", "/entrypoint.sh"]
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_HOST=0.0.0.0
+      - LLM_EMBEDDING_MODEL=${LLM_EMBEDDING_MODEL}
+      - LLM_GENERATION_MODEL=${LLM_GENERATION_MODEL}
+    networks:
+        - vimar_net
+
+networks:
+  vimar_net:
+    external: true

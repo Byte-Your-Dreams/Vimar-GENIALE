@@ -1,6 +1,6 @@
 #!/bin/bash 
 if [ -z "$1" ] || [ -z "$2" ]; then 
-    echo "Uso: $0 {up|down|build|reset} {nvidia|amd}" 
+    echo "Uso: $0 {up|down|build|reset} {nvidia|amd|cpu}" 
     exit 1 
 fi
 
@@ -15,8 +15,11 @@ case "$1" in
             amd) 
                 docker-compose -f docker-compose.ollama.amd.yml up -d
                 ;;
+            cpu) 
+                docker-compose -f docker-compose.ollama.cpu.yml up -d
+                ;;
             *) 
-                echo "Uso: $0 {up|down} {nvidia|amd}" 
+                echo "Uso: $0 {up|down} {nvidia|amd|cpu}" 
                 exit 1 
                 ;;
         esac 
@@ -33,8 +36,11 @@ case "$1" in
             amd) 
                 docker-compose -f docker-compose.ollama.amd.yml up -d
                 ;;
+            cpu) 
+                docker-compose -f docker-compose.ollama.cpu.yml up -d
+                ;;
             *) 
-                echo "Uso: $0 {up|down} {nvidia|amd}" 
+                echo "Uso: $0 {up|down} {nvidia|amd|cpu}" 
                 exit 1 
                 ;;
         esac 
@@ -52,8 +58,11 @@ case "$1" in
             amd) 
                 docker-compose -f docker-compose.ollama.amd.yml down
                 ;;
+            cpu) 
+                docker-compose -f docker-compose.ollama.cpu.yml down
+                ;;
             *) 
-                echo "Uso: $0 {up|down} {nvidia|amd}" 
+                echo "Uso: $0 {up|down} {nvidia|amd|cpu}" 
                 exit 1 
                 ;;
         esac 
@@ -69,8 +78,11 @@ case "$1" in
             amd) 
                 docker-compose -f docker-compose.ollama.amd.yml down -v
                 ;;
+            cpu) 
+                docker-compose -f docker-compose.ollama.cpu.yml down -v
+                ;;
             *) 
-                echo "Uso: $0 {up|down} {nvidia|amd}" 
+                echo "Uso: $0 {up|down} {nvidia|amd|cpu}" 
                 exit 1 
                 ;;
         esac 
@@ -82,7 +94,7 @@ case "$1" in
         
         ;;
     *) 
-        echo "Uso: $0 {up|down} {nvidia|amd}" 
+        echo "Uso: $0 {up|down} {nvidia|amd|cpu}" 
         exit 1 
         ;; 
 esac
