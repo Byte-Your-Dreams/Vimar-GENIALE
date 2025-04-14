@@ -23,97 +23,106 @@ export abstract class AbstractGenerator {
     constructor( protected services: any) { }
     public async generateAnswer(chat: Chat): Promise<Message> {
 
-
-        let allProducts: GeneralProductInfo;
         try {
-            allProducts = await this.services.getAllProductUseCase.getAllProduct();
+            let allProducts: GeneralProductInfo;
+            try {
+                allProducts = await this.services.getAllProductUseCase.getAllProduct();
+            } catch (error) {
+                console.error('[generateAnswer] Error fetching all products:', error);
+                throw new Error('Error fetching all products');
+            }
+
+            if (!allProducts) {
+                throw new Error('No products found');
+            }
+
+            // Extraction of product names and IDs
+            let lastMessage: Message = chat.getLastMessage();
+            let response: DBInsertResponse;
+            lastMessage.setProductNames(this.extractProductNames(chat.getLastMessage(), allProducts) || []);
+            lastMessage.setProductIDs(this.extractProductID(chat.getLastMessage(), allProducts) || []);
+            for (let i = 0; (i < 10 && lastMessage.getProductNames().length === 0 && lastMessage.getProductIDs().length === 0); i++) {
+                //let completeChat = await this.getHistoryUseCase.getHistory(chat.getID());
+                //if (!completeChat) {
+                //    throw new Error('No history found');
+                //}
+
+                //let completeChatType = new Chat(chat.getID(), chat.getMessages());
+
+                lastMessage = await this.reformulateQuestion(chat);
+                lastMessage.setProductNames(this.extractProductNames(lastMessage, allProducts) || []);
+                lastMessage.setProductIDs(this.extractProductID(lastMessage, allProducts) || []);
+            }
+
+            if (lastMessage.getProductNames().length === 0 && lastMessage.getProductIDs().length === 0) {
+                lastMessage.setAnswer("Non sono riuscito a trovare i prodotti di cui stai parlando. Prova a riformulare la domanda.");
+                response = await this.saveMessage(lastMessage);
+                if (!response.getSuccess()) {
+                    throw new Error('Message not saved');
+                }
+                return lastMessage;
+            }
+
+            let products: Product[] = await this.getProducts(lastMessage);
+            if (!products) {
+                lastMessage.setAnswer("Non sono riuscito a trovare i prodotti di cui stai parlando. Prova a riformulare la domanda.");
+                response = await this.saveMessage(lastMessage);
+                if (!response.getSuccess()) {
+                    throw new Error('Message not saved');
+                }
+                return lastMessage;
+            }
+
+            let question: AIQuestion = new AIQuestion(lastMessage.getQuestion());
+            let questionEmbedding: AIEmbedding = await this.getQueryEmbedding(question);
+            if (questionEmbedding.getSuccess() === false) {
+                throw new Error('Embedding not found');
+            }
+            console.log('-- questionEmbedding ---')
+            console.log(typeof(questionEmbedding.getEmbedding()));
+            console.log(questionEmbedding.getEmbedding());
+            console.log('---');
+            lastMessage.setEmbedding(questionEmbedding.getEmbedding());
+
+            let context: string = await this.getContext(lastMessage, products);
+            if (!context || context === '') {
+                lastMessage.setAnswer("Non trovo materiale sul prodotto di cui parli. Riprova più tardi.");
+                response = await this.saveMessage(lastMessage);
+                if (!response.getSuccess()) {
+                    throw new Error('Message not saved');
+                }
+                return lastMessage;
+            }
+
+            let prompt: AIPrompt = this.generatePrompt(lastMessage, context, products);
+
+            let answer = await this.services.generateAnswerUseCase.generateAnswer(prompt);
+            if (!answer.getSuccess()) {
+                lastMessage.setAnswer("C'è stato un problema nella generazione della risposta. Riprova più tardi.");
+                response = await this.saveMessage(lastMessage);
+                if (!response.getSuccess()) {
+                    throw new Error('Message not saved');
+                }
+                return lastMessage;
+            }
+
+            lastMessage.setAnswer(this.removeThinkTag(answer.getAnswer()));
+            console.log('[generateAnswer] Answer:', lastMessage);
+            response = await this.saveMessage(lastMessage);
+            if (!response.getSuccess()) {
+                throw new Error('Message not saved');
+            }
+
+            return lastMessage;
         } catch (error) {
-            console.error('[generateAnswer] Error fetching all products:', error);
-            throw new Error('Error fetching all products');
-        }
-
-        if (!allProducts) {
-            throw new Error('No products found');
-        }
-
-        // Extraction of product names and IDs
-        let lastMessage: Message = chat.getLastMessage();
-        let response: DBInsertResponse;
-        lastMessage.setProductNames(this.extractProductNames(chat.getLastMessage(), allProducts) || []);
-        lastMessage.setProductIDs(this.extractProductID(chat.getLastMessage(), allProducts) || []);
-        for (let i = 0; (i < 10 && lastMessage.getProductNames().length === 0 && lastMessage.getProductIDs().length === 0); i++) {
-            //let completeChat = await this.getHistoryUseCase.getHistory(chat.getID());
-            //if (!completeChat) {
-            //    throw new Error('No history found');
-            //}
-
-            //let completeChatType = new Chat(chat.getID(), chat.getMessages());
-
-            lastMessage = await this.reformulateQuestion(chat);
-            lastMessage.setProductNames(this.extractProductNames(lastMessage, allProducts) || []);
-            lastMessage.setProductIDs(this.extractProductID(lastMessage, allProducts) || []);
-        }
-
-        if (lastMessage.getProductNames().length === 0 && lastMessage.getProductIDs().length === 0) {
-            lastMessage.setAnswer("Non sono riuscito a trovare i prodotti di cui stai parlando. Prova a riformulare la domanda.");
-            response = await this.saveMessage(lastMessage);
-            if (!response.getSuccess()) {
-                throw new Error('Message not saved');
-            }
-            return lastMessage;
-        }
-
-        let products: Product[] = await this.getProducts(lastMessage);
-        if (!products) {
-            lastMessage.setAnswer("Non sono riuscito a trovare i prodotti di cui stai parlando. Prova a riformulare la domanda.");
-            response = await this.saveMessage(lastMessage);
-            if (!response.getSuccess()) {
-                throw new Error('Message not saved');
-            }
-            return lastMessage;
-        }
-
-        let question: AIQuestion = new AIQuestion(lastMessage.getQuestion());
-        let questionEmbedding: AIEmbedding = await this.getQueryEmbedding(question);
-        if (questionEmbedding.getSuccess() === false) {
-            throw new Error('Embedding not found');
-        }
-        console.log('-- questionEmbedding ---')
-        console.log(typeof(questionEmbedding.getEmbedding()));
-        console.log(questionEmbedding.getEmbedding());
-        console.log('---');
-        lastMessage.setEmbedding(questionEmbedding.getEmbedding());
-
-        let context: string = await this.getContext(lastMessage, products);
-        if (!context || context === '') {
-            lastMessage.setAnswer("Non trovo materiale sul prodotto di cui parli. Riprova più tardi.");
-            response = await this.saveMessage(lastMessage);
-            if (!response.getSuccess()) {
-                throw new Error('Message not saved');
-            }
-            return lastMessage;
-        }
-
-        let prompt: AIPrompt = this.generatePrompt(lastMessage, context, products);
-
-        let answer = await this.services.generateAnswerUseCase.generateAnswer(prompt);
-        if (!answer.getSuccess()) {
+            let lastMessage = chat.getLastMessage();
             lastMessage.setAnswer("C'è stato un problema nella generazione della risposta. Riprova più tardi.");
-            response = await this.saveMessage(lastMessage);
+            const response = await this.saveMessage(lastMessage);
             if (!response.getSuccess()) {
                 throw new Error('Message not saved');
             }
             return lastMessage;
         }
-
-        lastMessage.setAnswer(this.removeThinkTag(answer.getAnswer()));
-        console.log('[generateAnswer] Answer:', lastMessage);
-        response = await this.saveMessage(lastMessage);
-        if (!response.getSuccess()) {
-            throw new Error('Message not saved');
-        }
-
-        return lastMessage;
     }
 
     protected async reformulateQuestion(chat: Chat): Promise<Message> {
