@@ -68,7 +68,7 @@ serve(async (req: Request) => {
   console.error(`serving the request with ${servicePath}`)
 
   const memoryLimitMb = 512
-  const workerTimeoutMs = 1 * 60 * 5000
+  const workerTimeoutMs = 1 * 60 * 10000
   const noModuleCache = false
   const importMapPath = null
   const envVarsObj = Deno.env.toObject()
