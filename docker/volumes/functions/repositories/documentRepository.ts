@@ -18,7 +18,9 @@ export class DocumentRepository {
     }
 
     public async obtainDocument(document: SupabaseDocument): Promise<SupabaseDocument> {
-        const { data: files, error: listError } = await this.client.storage.from('files').list('pdfs');
+        const { data: files, error: listError } = await this.client.storage.from('files').list('pdfs', {
+            limit: 1000
+        });
         if (listError) {
             throw new Error(`Error listing PDFs: ${listError.message}`);
         }
