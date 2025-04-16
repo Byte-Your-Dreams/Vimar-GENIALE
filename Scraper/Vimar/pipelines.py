@@ -28,11 +28,7 @@ class DBPipeline(object):
         self.insertAssociationProductFileUseCase = self.initService['insert_association_product_file_service']
         self.insertFaqUseCase = self.initService['insert_faq_service']
         self.endUpdateUseCase = self.initService['end_update_service']
-        
-        
-    def close_spider(self, spider): 
-        pass
-
+    
     def process_item(self, item, spider):
         try:
             self._process_basic_info(item)
