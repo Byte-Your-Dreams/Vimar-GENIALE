@@ -40,7 +40,7 @@ export class DashboardPageComponent implements OnInit {
     const lineLabelsList = lineChartData.map(item => `Settimana ${item.week_number -1}`);
     const lineDataPositive = lineChartData.map(item => item.positive_feedback);
     const lineDataNegative = lineChartData.map(item => item.negative_feedback);
-    this.chartService.renderChart('line-chart', lineLabelsList, { primary: lineDataPositive, secondary: lineDataNegative }, 'Line Chart', 'Positive Feedbacks', 'Negative Feedbacks');
+    this.chartService.renderChart('line-chart', lineLabelsList, { primary: lineDataNegative, secondary: lineDataPositive }, 'Line Chart', 'Positive Feedbacks', 'Negative Feedbacks');
 
     // Bar Chart
     this.chartService.setStrategy(new BarChartStrategy());
@@ -54,7 +54,7 @@ export class DashboardPageComponent implements OnInit {
     const pieChartData: { positive_feedback_mex: number, negative_feedback_mex: number, neutral_feedback_mex: number }[] = await this.supabaseService.getCountFeedbackMex(); 
     const pieLabelsList = ["Positive", "Negative", "Neutral"];
     console.log('pieChartData', pieChartData);
-    const pieData = [pieChartData[0].positive_feedback_mex, pieChartData[0].negative_feedback_mex, pieChartData[0].neutral_feedback_mex];
+    const pieData = [pieChartData[0].negative_feedback_mex, pieChartData[0].positive_feedback_mex, pieChartData[0].neutral_feedback_mex];
     this.chartService.renderChart('pie-chart', pieLabelsList, pieData, 'Pie Chart', 'Quantity');
 
     // Termini più usati e numero di parole usate
