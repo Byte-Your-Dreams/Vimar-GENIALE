@@ -22,8 +22,9 @@ export class ScraperButtonComponent implements OnDestroy {
     const payload = new HttpParams()
       .set('project', 'Vimar')
       .set('spider', 'SpiderVimar');
-
-    this.http.post('http://localhost:6800/schedule.json', payload.toString(), {
+    const startingUrl = `${window.location.protocol}//${window.location.hostname}:6800/schedule.json`;
+    
+    this.http.post(startingUrl, payload.toString(), {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       }
@@ -56,7 +57,9 @@ export class ScraperButtonComponent implements OnDestroy {
       .set('project', 'Vimar')
       .set('spider', 'SpiderVimar')
       .set('job', this.jobId ?? '');
-    this.http.get('http://localhost:6800/status.json', { params }).subscribe({
+    const checkUrl = `${window.location.protocol}//${window.location.hostname}:6800/status.json`;
+    
+    this.http.get(checkUrl, { params }).subscribe({
       next: (response: any) => {
         console.log('Stato attuale dello scraper:', response.currstate);
         if (response.currstate === 'finished') {

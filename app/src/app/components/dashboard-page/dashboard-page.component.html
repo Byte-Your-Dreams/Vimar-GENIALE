@@ -1,6 +1,5 @@
 <div id="dashboard" class="dashboard">
   <h1 class="title">Pannello di Controllo</h1>
-  
   <app-scraper-button></app-scraper-button>
   
   <div class="gridContainer">
@@ -30,4 +29,38 @@
       </ul>
     </div>
   </div>
-</div>
+  
+  <div class="feedback-container">
+    <h2>Feedback</h2>
+    <div class="filter">
+      <label for="typeFilter">Filtra per:</label>
+      <select id="typeFilter" #typeFilter (change)="filterByType = typeFilter.value; applyFilters()">
+        <option value="all">Tutti i feedback</option>
+        <option value="true">Positivi</option>
+        <option value="false">Negativi</option>
+      </select>
+    </div>
+
+    <!-- Feedback list-->
+    <div class="feedback-list">
+      <div *ngFor="let fb of filteredFeedbacks" class="feedback-card" [class.positive]="fb.type" [class.negative]="!fb.type">
+        <div class="response-section">
+          <h3>Risposta correlata:</h3>
+          <markdown [data]="fb.risposta"></markdown>
+        </div>
+        
+        <div class="feedback-section">
+          <span class="feedback-type" [class.positive]="fb.type" [class.negative]="!fb.type">
+            {{ fb.type ? 'Positivo' : 'Negativo' }}
+          </span>
+          <p class="feedback-text">{{ fb.text }}</p>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Messaggio se vuoto -->
+    <div *ngIf="filteredFeedbacks.length === 0" class="empty-message">
+      <p>Nessun feedback trovato</p>
+    </div>
+  </div>
+</div>  

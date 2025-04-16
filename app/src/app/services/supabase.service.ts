@@ -279,4 +279,16 @@ export class SupabaseService{
     console.log('Analyzed data: ', data);
     return data;
   }
+
+  async getFeedbacks(): Promise<{ risposta: string, type: boolean, text: string }[]> {
+    const { data, error } = await this.supabase.rpc('get_feedbacks');
+    if (error) {
+      console.error('Error fetching feedbacks:', error);
+      return [];
+    }
+    console.log('feedbacks', data);
+    return data.map((feedback: {risposta: string, feedback_check: string, feedback_text: string}) => ({
+      risposta: feedback.risposta, type: feedback.feedback_check == "0", text: feedback.feedback_text
+    }));
+  }
 }

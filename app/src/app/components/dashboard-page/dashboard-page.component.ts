@@ -7,10 +7,11 @@ import { BarChartStrategy } from '../../services/bar-chart-strategy';
 import { PieChartStrategy } from '../../services/pie-chart-strategy';
 import { SupabaseService } from '../../services/supabase.service';
 import { ScraperButtonComponent } from '../scraper-button/scraper-button.component';
+import { MarkdownModule } from 'ngx-markdown';
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [CommonModule, FormsModule, ScraperButtonComponent],
+  imports: [CommonModule, FormsModule, ScraperButtonComponent, MarkdownModule],
   templateUrl: './dashboard-page.component.html',
   styleUrl: './dashboard-page.component.css',
   standalone: true
@@ -20,6 +21,9 @@ export class DashboardPageComponent implements OnInit {
 
   public averageWords: number = 0;
   public wordCounts: { word: string, count: number }[] = [];
+  public feedbacks: { risposta: string, type: boolean, text: string }[] = [];
+  public filteredFeedbacks: { risposta: string, type: boolean, text: string }[] = [];
+  public filterByType: string = 'all';
 
   constructor(
     private chartService: ChartService, 
@@ -57,5 +61,25 @@ export class DashboardPageComponent implements OnInit {
     const analysisResult = await this.supabaseService.getAnalyzeTextMessages();
     this.averageWords = Math.floor(analysisResult.averageWords);
     this.wordCounts  = analysisResult.wordCounts.slice(0,3);
+    this.feedbacks = await this.supabaseService.getFeedbacks();
+    console.log('feedbacks', this.feedbacks);
+    this.applyFilters();
+  }
+
+  // feebacks
+  get positiveCount(): number {
+    return this.feedbacks.filter(fb => fb.type).length;
+  }
+
+  get negativeCount(): number {
+    return this.feedbacks.filter(fb => !fb.type).length;
+  }
+
+  applyFilters() {
+    this.filteredFeedbacks = this.feedbacks.filter(fb => {
+      return this.filterByType === 'all' || 
+             (this.filterByType === 'true' && fb.type) || 
+             (this.filterByType === 'false' && !fb.type);
+    });
   }
 }

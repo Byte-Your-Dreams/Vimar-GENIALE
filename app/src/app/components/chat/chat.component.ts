@@ -142,6 +142,8 @@ export class ChatComponent implements OnInit {
     this.clearTimeout();
   }
 
+  public showFeedbackSuccess: boolean = false;
+
   handleFeedbackClick(feedback: 'thumbsUp' | 'thumbsDown'): void {
     const isPositive = feedback === 'thumbsUp';
     const dialogRef = this.dialog.open(FeedbackDialogComponent, {
@@ -160,6 +162,10 @@ export class ChatComponent implements OnInit {
           if (messageId) {
             try {
               await this.supabaseService.submitFeedback(messageId, feedbackCheck, feedbackText);
+              this.showFeedbackSuccess = true;
+              setTimeout(() => {
+                this.showFeedbackSuccess = false;
+              }, 5000);
             } catch (error) {
               console.error('Error submitting feedback:', error);
             }

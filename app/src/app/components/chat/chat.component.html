@@ -2,7 +2,7 @@
   <div class="chat-header">
     <p class="chat-title">{{ (currentConversation.messages[0]?.domanda || "Conversazione vuota") | slice:0:30 }}
       <span *ngIf="currentConversation.messages[0]?.domanda?.length > 50">...</span></p>
-    <div class="b480065b"></div>
+    <div class="blur"></div>
   </div>
 </ng-container>
 
@@ -28,11 +28,14 @@
             <markdown [data]="message.risposta"></markdown>
           </div>
 
-          <div *ngIf="i == currentConversation.messages.length - 1 && message.risposta && !isTimeoutMessage(message)" class="feedback-container">
+          <!-- Combined container for timestamp and feedback -->
+          <div *ngIf="message.risposta" class="message-footer">
             <span class="message-time">
-              {{ message.createdat ? (message.createdat | date: 'dd/MM/yyyy HH:mm') : (message.CreatedAt ? (message.CreatedAt | date: 'dd/MM/yyyy HH:mm') : "Data Non Disponibile") }}
+              {{ message.createdat ? (message.createdat | date: 'dd/MM/yyyy HH:mm') : (message.CreatedAt ? (message.CreatedAt | date: 'dd/MM/yyyy HH:mm') : (message.timestamp ? (message.timestamp | date: 'dd/MM/yyyy HH:mm') : "Data Non Disponibile")) }}
             </span>
-            <div class="feedback-buttons">
+            
+            <!-- Feedback buttons only for the last message -->
+            <div *ngIf="i == currentConversation.messages.length - 1 && !isTimeoutMessage(message)" class="feedback-buttons">
               <button class="feedback-button thumbs-up" aria-label="Risposta giusta" [class.selected]="selectedFeedback === 'thumbsUp'"
                 (click)="handleFeedbackClick('thumbsUp')">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
@@ -72,4 +75,9 @@
   </ng-template>
   
 </div>
+
+<div *ngIf="showFeedbackSuccess" class="feedback-success-notification">
+  Feedback inviato con successo!
+</div>
+
 <app-messagebox></app-messagebox>
