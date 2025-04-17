@@ -43,15 +43,15 @@
 
     <!-- Feedback list-->
     <div class="feedback-list">
-      <div *ngFor="let fb of filteredFeedbacks" class="feedback-card" [class.positive]="fb.type" [class.negative]="!fb.type">
+      <div *ngFor="let fb of filteredFeedbacks" class="feedback-card" [class.positive]="!fb.type" [class.negative]="fb.type">
         <div class="response-section">
           <h3>Risposta correlata:</h3>
           <markdown [data]="fb.risposta"></markdown>
         </div>
         
         <div class="feedback-section">
-          <span class="feedback-type" [class.positive]="fb.type" [class.negative]="!fb.type">
-            {{ fb.type ? 'Positivo' : 'Negativo' }}
+          <span class="feedback-type" [class.positive]="!fb.type" [class.negative]="fb.type">
+            {{ !fb.type ? 'Positivo' : 'Negativo' }}
           </span>
           <p class="feedback-text">{{ fb.text }}</p>
         </div>

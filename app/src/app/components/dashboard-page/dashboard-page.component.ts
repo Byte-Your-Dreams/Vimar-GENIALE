@@ -78,8 +78,8 @@ export class DashboardPageComponent implements OnInit {
   applyFilters() {
     this.filteredFeedbacks = this.feedbacks.filter(fb => {
       return this.filterByType === 'all' || 
-             (this.filterByType === 'true' && fb.type) || 
-             (this.filterByType === 'false' && !fb.type);
+             (this.filterByType === 'true' && !fb.type) || 
+             (this.filterByType === 'false' && fb.type);
     });
   }
 }
