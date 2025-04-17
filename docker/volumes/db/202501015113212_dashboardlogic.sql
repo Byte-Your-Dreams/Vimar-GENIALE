@@ -67,3 +67,22 @@ order by
     WeekNumber;
 end;
 $$ language plpgsql;
+
+CREATE OR REPLACE FUNCTION get_feedbacks()
+RETURNS TABLE (
+    risposta TEXT,
+    feedback_check BIT,
+    feedback_text TEXT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        messaggio.risposta,
+        messaggio.feedback_check,
+        messaggio.feedback_text
+    FROM 
+        messaggio
+    WHERE 
+        messaggio.feedback_check IS NOT NULL;
+END;
+$$ LANGUAGE plpgsql;
