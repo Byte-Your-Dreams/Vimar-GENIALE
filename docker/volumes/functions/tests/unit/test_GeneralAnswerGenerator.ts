@@ -12,10 +12,10 @@ import { AIAnswer } from "../../models/aiAnswer.ts";
 import { Document, Chunk } from "../../models/document.ts"
 import { ObtainSimilarChunkUseCase } from "../../useCases/obtainSimilarChunkUseCase.ts";
 
-const otherMockServices = {
+const mockServices = {
   getAllProductUseCase: {
     async getAllProduct(): Promise<GeneralProductInfo> {
-      return new GeneralProductInfo(["Product 1", "Product 2"], ["ID1", "ID2"]);
+      return new GeneralProductInfo(["Product 1"], ["ID1"]);
     },
   },
   generateAnswerUseCase: {
@@ -30,12 +30,7 @@ const otherMockServices = {
   },
   getProductUseCase: {
     async getProduct(name: string | null, id: string | null): Promise<Product> {
-      if (name === "Product 1" || id === "ID1") {
-        return new Product(id || "ID1", name || "Product 1", "Description", "ETIM");
-      } else if (name === "Product 2" || id === "ID2") {
-        return new Product(id || "Mocked ID 2", name || "Mocked Product 2", "Description 2", "ETIM 2");
-      }
-      return new Product("Mocked ID", "Mocked Product", "Description", "ETIM");
+      return new Product(id || "ID1", name || "Product 1", "Description", "ETIM");
     },
   },
   updateMessageUseCase: {
@@ -50,23 +45,20 @@ const otherMockServices = {
   },
   getDocumentsUseCase: {
     async getDocuments(productId: string): Promise<Document[]> {
-      return [];
+      return [
+        new Document("doc1", "Document 1", "", "", "", {}, new Blob(), "http://example.com/doc1", 1)
+      ];
     },
   },
-};
-
-const mockServices = {
-  ...otherMockServices,
-  ObtainSimilarChunkUseCase: {
+  obtainSimilarChunkUseCase: {
     async obtainSimilarChunk(message: Message, documents: Document[], nChunk: number): Promise<Chunk[]> {
       return [
-        { getContent: () => "Chunk 1 content" } as Chunk,
-        { getContent: () => "Chunk 2 content" } as Chunk,
+        new Chunk("Chunk 1 content", "doc1", 1, [0.1, 0.2, 0.3]),
+        new Chunk("Chunk 2 content", "doc2", 2, [0.4, 0.5, 0.6]),
       ];
     },
   },
 };
-
 
 Deno.test("AbstractGenerator: generateAnswer should return a Message with an answer", async () => {
   // Arrange
@@ -119,7 +111,7 @@ Deno.test("AbstractGenerator: generateAnswer should throw an error if chat has n
     await generator.generateAnswer(chat);
   } catch (error) {
     if (error instanceof Error) {
-      assertEquals(error.message, "Cannot read properties of undefined (reading 'setProductNames')");
+      assertEquals(error.message, "Cannot read properties of undefined (reading 'setAnswer')");
     }
   }
 });
@@ -250,7 +242,6 @@ Deno.test("GeneralAnswerGenerator: getContext should return mocked context", asy
 
   // Act
   const result = await generator["getContext"](message, products);
-  console.log(result); // Log the result for debugging
   // Assert
   assertEquals(result, "Chunk 1 content\n\nChunk 2 content\n\n");
 });
@@ -297,12 +288,6 @@ Deno.test("GeneralAnswerGenerator: generatePrompt should return the correct prom
 
   // Act
   const result = generator["generatePrompt"](message, context, products);
-  if(!result) {
-    console.log("DEBUG"); // Log the result for debugging
-  } else {
-    console.log("CIAO");
-    console.log(result.getPrompt()[0].content); // Log the prompt for debugging
-  }
   // Assert
   assertEquals(result.getPrompt()[0].role, "system");
   const content = result.getPrompt()[0].content;
