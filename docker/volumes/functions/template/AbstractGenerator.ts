@@ -78,10 +78,6 @@ export abstract class AbstractGenerator {
             if (questionEmbedding.getSuccess() === false) {
                 throw new Error('Embedding not found');
             }
-            console.log('-- questionEmbedding ---')
-            console.log(typeof(questionEmbedding.getEmbedding()));
-            console.log(questionEmbedding.getEmbedding());
-            console.log('---');
             lastMessage.setEmbedding(questionEmbedding.getEmbedding());
 
             let context: string = await this.getContext(lastMessage, products);
@@ -107,7 +103,6 @@ export abstract class AbstractGenerator {
             }
 
             lastMessage.setAnswer(this.removeThinkTag(answer.getAnswer()));
-            console.log('[generateAnswer] Answer:', lastMessage);
             response = await this.saveMessage(lastMessage);
             if (!response.getSuccess()) {
                 throw new Error('Message not saved');
@@ -182,7 +177,6 @@ export abstract class AbstractGenerator {
                 relevantProd.push({ name: productName, percentage });
 
                 if (percentage >= 50.00) {
-                    console.log(`[extractProductNames] Found ${productName} with ${percentage}% similarity`);
                 }
             }
     
@@ -195,8 +189,6 @@ export abstract class AbstractGenerator {
                 const baseName = product.split(' ').slice(0, 3).join(' ');
                 return !uniqueProducts.has(baseName) && uniqueProducts.add(baseName);
             });
-    
-            console.log(`[extractProductNames] Found ${finalProducts.length} matching products`);
             return finalProducts.length > 0 ? finalProducts : null;
         } catch (e) {
             console.error('[extractProductNames] Error:', e);
@@ -207,7 +199,6 @@ export abstract class AbstractGenerator {
     protected extractProductID(message: Message, allProducts: GeneralProductInfo): string[] | null {
         const queryWords: string[] = message.getQuestion().toLowerCase().match(/\b\w+(?:\.\w+)?\b/g) || [];
         const ids: string[] = allProducts.getIds().filter(id => queryWords.includes(id.toLocaleLowerCase()));
-        console.log('[extractProductIDs] Found ${ids.length} matching IDs');
         return ids.length > 0 ? ids : null;
     }
 
