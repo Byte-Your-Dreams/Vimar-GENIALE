@@ -103,6 +103,7 @@ export abstract class AbstractGenerator {
             }
 
             lastMessage.setAnswer(this.removeThinkTag(answer.getAnswer()));
+            console.log('[generateAnswer] Answer:', lastMessage);
             response = await this.saveMessage(lastMessage);
             if (!response.getSuccess()) {
                 throw new Error('Message not saved');
