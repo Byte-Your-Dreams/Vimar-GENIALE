@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
 
       let typeOfQuestion = await getTypeOfQuestion(question);
       console.log("typeOfQuestion", typeOfQuestion);
+      chat.getLastMessage().setTypeOfQuestion(typeOfQuestion);
       if (typeOfQuestion === 1) {
         //Techical Request
         const generator = new TechnicalAnswerGenerator(services);
