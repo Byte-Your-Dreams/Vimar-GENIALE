@@ -154,6 +154,19 @@ Deno.test("AbstractGenerator: extractProductNames should return matching product
   assertEquals(result, ["Termostato a rotella connesso"]);
 });
 
+Deno.test("AbstractGenerator: extractProductNames should exclude products with low percentage", () => {
+  // Arrange
+  const generator = new GeneralAnswerGenerator(mockServices);
+  const message = new Message("msg1", "chat1", "Tell me about Deviatore connesso IoT", new Date(), "", [], [], []);
+  const allProducts = new GeneralProductInfo(["Termostato a rotella connesso"], ["ID1"]);
+
+  // Act
+  const result = generator["extractProductNames"](message, allProducts);
+
+  // Assert
+  assertEquals(result, null); // Nessun prodotto dovrebbe essere incluso
+});
+
 Deno.test("AbstractGenerator: extractProductID should return matching product IDs", () => {
   // Arrange
   const generator = new GeneralAnswerGenerator(mockServices);
@@ -166,6 +179,19 @@ Deno.test("AbstractGenerator: extractProductID should return matching product ID
 
   // Assert
   assertEquals(result, ["ID1"]);
+});
+
+Deno.test("AbstractGenerator: extractProductID should return null if no IDs match", () => {
+  // Arrange
+  const generator = new GeneralAnswerGenerator(mockServices);
+  const message = new Message("msg1", "chat1", "Tell me about Product X", new Date(), "", [], [], []);
+  const allProducts = new GeneralProductInfo(["Product 1"], ["ID1"]);
+
+  // Act
+  const result = generator["extractProductID"](message, allProducts);
+
+  // Assert
+  assertEquals(result, null);
 });
 
 Deno.test("AbstractGenerator: reformulateQuestion should return a reformulated Message", async () => {
@@ -279,6 +305,32 @@ Deno.test("GeneralAnswerGenerator: getContext should return the correct context"
   assertEquals(result, "Chunk 1 content\n\nChunk 2 content\n\n");
 });
 
+Deno.test("GeneralAnswerGenerator: getContext should handle empty documents", async () => {
+  // Arrange
+  const failingServices = {
+    ...mockServices,
+    getDocumentsUseCase: {
+      async getDocuments(productId: string): Promise<Document[]> {
+        return []; // Simula nessun documento trovato
+      },
+    },
+    obtainSimilarChunkUseCase: {
+      async obtainSimilarChunk(message: Message, documents: Document[], nChunk: number): Promise<Chunk[]> {
+        return []; // Simula nessun chunk trovato
+      },
+    },
+  };
+  const generator = new GeneralAnswerGenerator(failingServices);
+  const message = new Message("msg1", "chat1", "What is Product 1?", new Date(), "", [], [], []);
+  const products = [new Product("ID1", "Product 1", "Description", "ETIM")];
+
+  // Act
+  const result = await generator["getContext"](message, products);
+
+  // Assert
+  assertEquals(result, ""); // Contesto vuoto
+});
+
 Deno.test("GeneralAnswerGenerator: generatePrompt should return the correct prompt", () => {
   // Arrange
   const generator = new GeneralAnswerGenerator(mockServices);
@@ -296,4 +348,181 @@ Deno.test("GeneralAnswerGenerator: generatePrompt should return the correct prom
   }
   assertEquals(result.getPrompt()[1].role, "user");
   //assertEquals(result.getPrompt()[1].content, "What is Product 1?");
+});
+
+Deno.test("AbstractGenerator: should handle empty context", async () => {
+  // Arrange
+  const failingServices = {
+    ...mockServices,
+    obtainSimilarChunkUseCase: {
+      async obtainSimilarChunk(message: Message, documents: Document[], nChunk: number): Promise<Chunk[]> {
+        return [];
+      },
+    },
+  };
+  const generator = new GeneralAnswerGenerator(failingServices);
+  const chat = new Chat("chat1", [
+    new Message("msg1", "chat1", "What is Product 1?", new Date(), "", [], [], []),
+  ]);
+
+  // Act
+  const result = await generator.generateAnswer(chat);
+
+  // Assert
+  assertEquals(result.getAnswer(), "Non trovo materiale sul prodotto di cui parli. Riprova più tardi.");
+});
+
+Deno.test("AbstractGenerator: should handle failed answer generation", async () => {
+  // Arrange
+  const failingServices = {
+    ...mockServices,
+    generateAnswerUseCase: {
+      async generateAnswer(prompt: AIPrompt): Promise<AIAnswer> {
+        return new AIAnswer(false, "");
+      },
+    },
+  };
+  const generator = new GeneralAnswerGenerator(failingServices);
+  const chat = new Chat("chat1", [
+    new Message("msg1", "chat1", "What is Product 1?", new Date(), "", [], [], []),
+  ]);
+
+  // Act
+  const result = await generator.generateAnswer(chat);
+
+  // Assert
+  assertEquals(result.getAnswer(), "C'è stato un problema nella generazione della risposta. Riprova più tardi.");
+});
+
+Deno.test("AbstractGenerator: should throw error if message not saved", async () => {
+  // Arrange
+  const failingServices = {
+    ...mockServices,
+    updateMessageUseCase: {
+      async updateMessage(message: Message): Promise<DBInsertResponse> {
+        return new DBInsertResponse(false, "Failed to save");
+      },
+    },
+  };
+  const generator = new GeneralAnswerGenerator(failingServices);
+  const chat = new Chat("chat1", [
+    new Message("msg1", "chat1", "What is Product 1?", new Date(), "", [], [], []),
+  ]);
+
+  // Act & Assert
+  try {
+    await generator.generateAnswer(chat);
+  } catch (error) {
+    if (error instanceof Error) {
+      assertEquals(error.message, "Message not saved");
+    }
+  }
+});
+
+Deno.test("AbstractGenerator: should handle empty products", async () => {
+  // Arrange
+  class MockedGeneralAnswerGenerator extends GeneralAnswerGenerator {
+    protected override async getProducts(message: Message): Promise<Product[]> {
+      return []; // Simula nessun prodotto trovato
+    }
+  }
+
+  const failingServices = {
+    ...mockServices,
+    getProducts: async () => [], // Simulate no products found
+  };
+
+  const generator = new MockedGeneralAnswerGenerator(failingServices);
+  const chat = new Chat("chat1", [
+    new Message("msg1", "chat1", "What is Product 1?", new Date(), "", [], [], []),
+  ]);
+
+  // Act
+  const result = await generator.generateAnswer(chat);
+
+  // Assert
+  assertEquals(result.getAnswer(), "Non sono riuscito a trovare i prodotti di cui stai parlando. Prova a riformulare la domanda.");
+});
+
+Deno.test("AbstractGenerator: generateAnswer should handle empty products", async () => {
+  // Arrange
+  class MockedGeneralAnswerGenerator extends GeneralAnswerGenerator {
+    protected override async getProducts(message: Message): Promise<Product[]> {
+      return []; // Simula nessun prodotto trovato
+    }
+  }
+
+  const generator = new MockedGeneralAnswerGenerator(mockServices);
+  const chat = new Chat("chat1", [
+    new Message("msg1", "chat1", "What is Product 1?", new Date(), "", [], [], []),
+  ]);
+
+  // Act
+  const result = await generator.generateAnswer(chat);
+
+  // Assert
+  assertEquals(result.getAnswer(), "Non sono riuscito a trovare i prodotti di cui stai parlando. Prova a riformulare la domanda.");
+});
+
+Deno.test("AbstractGenerator: should handle failed embedding generation", async () => {
+  // Arrange
+  const failingServices = {
+    ...mockServices,
+    generateEmbeddingUseCase: {
+      async generateEmbedding(question: AIQuestion): Promise<AIEmbedding> {
+        return new AIEmbedding(false, []);
+      },
+    },
+  };
+  const generator = new GeneralAnswerGenerator(failingServices);
+  const chat = new Chat("chat1", [
+    new Message("msg1", "chat1", "What is Product 1?", new Date(), "", [], [], []),
+  ]);
+
+  // Act & Assert
+  try {
+    await generator.generateAnswer(chat);
+  } catch (error) {
+    if (error instanceof Error) {
+      assertEquals(error.message, "Embedding generation failed");
+    }
+  }
+});
+
+Deno.test("GeneralAnswerGenerator: generateAnswer should handle service failure", async () => {
+  // Arrange
+  const failingServices = {
+    ...mockServices,
+    generateAnswerUseCase: {
+      async generateAnswer(prompt: AIPrompt): Promise<AIAnswer> {
+        throw new Error("Service failure");
+      },
+    },
+  };
+  const generator = new GeneralAnswerGenerator(failingServices);
+  const chat = new Chat("chat1", [
+    new Message("msg1", "chat1", "What is Product 1?", new Date(), "", [], [], []),
+  ]);
+
+  // Act & Assert
+  try {
+    await generator.generateAnswer(chat);
+  } catch (error) {
+    if (error instanceof Error) {
+      assertEquals(error.message, "Service failure");
+    }
+  }
+});
+
+Deno.test("AbstractGenerator: removeThinkTag should handle text without <think> tags", () => {
+  // Arrange
+  const generator = new GeneralAnswerGenerator(mockServices);
+  const text = "This is the actual answer.";
+
+  // Act
+  const result = generator["removeThinkTag"](text);
+  console.log('result', result)
+
+  // Assert
+  assertEquals(result, "This is the actual answer.");
 });

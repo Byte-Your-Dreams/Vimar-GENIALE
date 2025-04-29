@@ -42,13 +42,7 @@ export abstract class AbstractGenerator {
             lastMessage.setProductNames(this.extractProductNames(chat.getLastMessage(), allProducts) || []);
             lastMessage.setProductIDs(this.extractProductID(chat.getLastMessage(), allProducts) || []);
             for (let i = 0; (i < 10 && lastMessage.getProductNames().length === 0 && lastMessage.getProductIDs().length === 0); i++) {
-                //let completeChat = await this.getHistoryUseCase.getHistory(chat.getID());
-                //if (!completeChat) {
-                //    throw new Error('No history found');
-                //}
-
-                //let completeChatType = new Chat(chat.getID(), chat.getMessages());
-
+                console.log('[generateAnswer] Reformulating question attempt:', i + 1);
                 lastMessage = await this.reformulateQuestion(chat);
                 lastMessage.setProductNames(this.extractProductNames(lastMessage, allProducts) || []);
                 lastMessage.setProductIDs(this.extractProductID(lastMessage, allProducts) || []);
@@ -64,7 +58,7 @@ export abstract class AbstractGenerator {
             }
 
             let products: Product[] = await this.getProducts(lastMessage);
-            if (!products) {
+            if (!products || products.length === 0) {
                 lastMessage.setAnswer("Non sono riuscito a trovare i prodotti di cui stai parlando. Prova a riformulare la domanda.");
                 response = await this.saveMessage(lastMessage);
                 if (!response.getSuccess()) {
