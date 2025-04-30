@@ -55,6 +55,78 @@ Deno.test("ChunkRepository: obtainSimilarChunk should throw an error if no data 
   }
 });
 
+Deno.test("ChunkRepository: obtainSimilarChunk should throw an error if data is empty", async () => {
+  // Arrange
+  const mockClient = {
+    rpc: async () => ({
+      data: [], // Simula un array vuoto
+      error: null,
+    }),
+  };
+
+  const repository = new ChunkRepository(mockClient as any);
+  const message = new SupabaseMessage("msg1", "chat1", "Question", new Date(), [], [], [0.1, 0.2, 0.3], "Answer");
+  const documents = [new SupabaseDocument("doc1", "url1", '', '', '', {}, undefined, "url1", 2)];
+  const nChunk = 2;
+
+  // Act & Assert
+  try {
+    await repository.obtainSimilarChunk(message, documents, nChunk);
+  } catch (error) {
+    if (error instanceof Error) {
+      assertEquals(error.message, "No data found");
+    }
+  }
+});
+
+Deno.test("ChunkRepository: obtainSimilarChunk should throw an error if data is null", async () => {
+  // Arrange
+  const mockClient = {
+    rpc: async () => ({
+      data: null, // Simula un risultato nullo
+      error: null,
+    }),
+  };
+
+  const repository = new ChunkRepository(mockClient as any);
+  const message = new SupabaseMessage("msg1", "chat1", "Question", new Date(), [], [], [0.1, 0.2, 0.3], "Answer");
+  const documents = [new SupabaseDocument("doc1", "url1", '', '', '', {}, undefined, "url1", 2)];
+  const nChunk = 2;
+
+  // Act & Assert
+  try {
+    await repository.obtainSimilarChunk(message, documents, nChunk);
+  } catch (error) {
+    if (error instanceof Error) {
+      assertEquals(error.message, "No data found");
+    }
+  }
+});
+
+Deno.test("ChunkRepository: obtainSimilarChunk should throw an error if RPC returns an error", async () => {
+  // Arrange
+  const mockClient = {
+    rpc: async () => ({
+      data: null,
+      error: { message: "RPC error occurred" }, // Simula un errore RPC
+    }),
+  };
+
+  const repository = new ChunkRepository(mockClient as any);
+  const message = new SupabaseMessage("msg1", "chat1", "Question", new Date(), [], [], [0.1, 0.2, 0.3], "Answer");
+  const documents = [new SupabaseDocument("doc1", "url1", '', '', '', {}, undefined, "url1", 2)];
+  const nChunk = 2;
+
+  // Act & Assert
+  try {
+    await repository.obtainSimilarChunk(message, documents, nChunk);
+  } catch (error) {
+    if (error instanceof Error) {
+      assertEquals(error.message, "RPC error occurred");
+    }
+  }
+});
+
 Deno.test("ChunkRepository: upsertChunk should return a successful response", async () => {
   // Arrange
   const mockClient = {
