@@ -8,7 +8,7 @@ import { AbstractGenerator } from "./AbstractGenerator.ts";
 
 
 export class DifferenceAnswerGenerator extends AbstractGenerator {
-    protected async reformulateQuestion(chat: Chat): Promise<Message> {
+    protected override async reformulateQuestion(chat: Chat): Promise<Message> {
         if (!chat.getMessages() || chat.getMessages().length === 1) {
             throw new Error('No history found');
         }

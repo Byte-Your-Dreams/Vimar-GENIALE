@@ -22,7 +22,7 @@ export class Message {
     private productNames: string[];
     private productIDs: string[];
     private embedding: number[];
-    private typeOfQuestion: number;
+    private typeOfQuestion: number = 4;
 
     constructor(id: string, chatID: string, question: string, date: Date, answer: string = "", productNames: string[] = [], productIDs: string[] = [], embedding: number[] = [], typeOfQuestion: number = 4) {
         this.id = id;
