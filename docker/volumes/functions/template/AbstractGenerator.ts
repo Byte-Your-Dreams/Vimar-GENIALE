@@ -41,13 +41,20 @@ export abstract class AbstractGenerator {
             let response: DBInsertResponse;
             lastMessage.setProductNames(this.extractProductNames(chat.getLastMessage(), allProducts) || []);
             lastMessage.setProductIDs(this.extractProductID(chat.getLastMessage(), allProducts) || []);
-            for (let i = 0; (i < 10 && lastMessage.getProductNames().length === 0 && lastMessage.getProductIDs().length === 0); i++) {
-                console.log('[generateAnswer] Reformulating question attempt:', i + 1);
-                lastMessage = await this.reformulateQuestion(chat);
-                lastMessage.setProductNames(this.extractProductNames(lastMessage, allProducts) || []);
-                lastMessage.setProductIDs(this.extractProductID(lastMessage, allProducts) || []);
+            if (lastMessage.getTypeOfQuestion() !== 3) {
+                for (let i = 0; (i < 10 && lastMessage.getProductNames().length === 0 && lastMessage.getProductIDs().length === 0); i++) {
+                    lastMessage = await this.reformulateQuestion(chat);
+                    lastMessage.setProductNames(this.extractProductNames(lastMessage, allProducts) || []);
+                    lastMessage.setProductIDs(this.extractProductID(lastMessage, allProducts) || []);
+                }
+            } else {
+                for (let i=0; (i<10 && lastMessage.getProductNames().length <= 1 && lastMessage.getProductIDs().length <= 1); i++) {
+                    lastMessage = await this.reformulateQuestion(chat);
+                    lastMessage.setProductNames(this.extractProductNames(lastMessage, allProducts) || []);
+                    lastMessage.setProductIDs(this.extractProductID(lastMessage, allProducts) || []);
+                }
             }
-
+            
             if (lastMessage.getProductNames().length === 0 && lastMessage.getProductIDs().length === 0) {
                 lastMessage.setAnswer("Non sono riuscito a trovare i prodotti di cui stai parlando. Prova a riformulare la domanda.");
                 response = await this.saveMessage(lastMessage);
@@ -122,7 +129,13 @@ export abstract class AbstractGenerator {
         
         let messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [{
             role: 'system',
-            content: "YOU ARE A QUESTION REFORMULATOR. STRICT RULES:1. NEVER answer the question 2. ALWAYS maintain original language 3. REFORMAT references using chat history 4. OUTPUT FORMAT: 'REFORMULATED: [standalone_question]. 5. The question must indicate the complete products names or codes of all products, they could be more then one'" 
+            content: "YOU ARE A QUESTION REFORMULATOR. \
+            STRICT RULES:\
+                1. NEVER answer the question \
+                2. ALWAYS maintain original language \
+                3. REFORMAT references using chat history \
+                4. OUTPUT FORMAT: 'REFORMULATED: [standalone_question]. \
+                5. The question must indicate the complete products names or codes of all products, they could be more then one'" 
         }];
 
         for (const message of chat.getMessages()) {
