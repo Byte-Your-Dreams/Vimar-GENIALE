@@ -239,6 +239,79 @@ class TestSupabaseRepository(unittest.TestCase):
         self.supabase_client_mock.table.return_value.update.assert_called_once_with({'updated': False})
         self.supabase_client_mock.table.return_value.update.return_value.eq.assert_called_once_with('updated', True)
 
+    def test_insert_association_product_file_no_data(self):
+        self.supabase_client_mock.table.return_value.upsert.return_value.execute.return_value.data = None
+
+        product = MagicMock()
+        product.get_id.return_value = "123"
+        file = MagicMock()
+        file.get_url.return_value = "https://example.com/test.pdf"
+
+        response = self.repository.insert_association_product_file(product, file)
+
+        self.assertFalse(response.get_success())
+        self.assertEqual(response.get_message(), "Failed to insert association")
+
+    def test_insert_file_no_data(self):
+        self.supabase_client_mock.table.return_value.upsert.return_value.execute.return_value.data = None
+
+        file = MagicMock()
+        file.get_url.return_value = "https://example.com/test.pdf"
+        file.get_name.return_value = "test.pdf"
+        file.get_objID.return_value = "file_id"
+
+        response = self.repository.insert_file(file)
+
+        self.assertFalse(response.get_success())
+        self.assertEqual(response.get_message(), "Failed to insert PDF")
+
+    def test_insert_faq_no_data(self):
+        self.supabase_client_mock.table.return_value.upsert.return_value.execute.return_value.data = None
+
+        faq = MagicMock()
+        faq.get_productID.return_value = "123"
+        faq.get_question.return_value = "What is this?"
+        faq.get_answer.return_value = "This is a test."
+
+        response = self.repository.insert_faq(faq)
+
+        self.assertFalse(response.get_success())
+        self.assertEqual(response.get_message(), "Failed to insert FAQ")
+
+
+    def test_end_update_no_data(self):
+        self.supabase_client_mock.table.return_value.update.return_value.eq.return_value.execute.return_value.data = None
+
+        response = self.repository.end_update()
+
+        self.assertFalse(response.get_success())
+        self.assertEqual(response.get_message(), "Failed to complete update")
+
+    def test_check_updated_file_exception(self):
+        self.supabase_client_mock.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.side_effect = Exception("Query failed")
+
+        file = MagicMock()
+        file.get_name.return_value = "test.pdf"
+
+        with self.assertRaises(Exception) as context:
+            self.repository.check_updated_file(file)
+        self.assertEqual(str(context.exception), "Query failed")
+    
+    def test_upload_file_not_found_after_upload(self):
+        self.supabase_client_mock.storage.from_.return_value.upload.return_value = True
+        self.supabase_client_mock.storage.from_.return_value.list.return_value = [{"name": "other.pdf", "id": "wrong_id"}]
+
+        file = MagicMock()
+        file.get_path.return_value = "path/to/test.pdf"
+        file.get_name.return_value = "test.pdf"
+
+        with patch("builtins.open", new_callable=MagicMock) as mock_open:
+            mock_open.return_value.__enter__.return_value = MagicMock()
+
+            response = self.repository.upload_file(file)
+
+        self.assertIsNone(response)  # Nessun file trovato con il nome giusto
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -90,5 +90,49 @@ class TestDBPipeline(unittest.TestCase):
         # Assert that the end_update method was called
         self.pipeline.endUpdateUseCase.end_update.assert_called_once()
 
+    @patch('Vimar.pipelines.Product')
+    def test_process_basic_info_fail(self, MockProduct):
+        mock_response = MagicMock()
+        mock_response.get_success = False
+        mock_response.get_message = "DB error"
+        self.pipeline.insertProductUseCase.insert_product.return_value = mock_response
+
+        item = ProductItem(ID='123', Nome='Test Product', Descrizione='Test Description', ETIM='ETIM123')
+
+        with self.assertRaises(Exception) as context:
+            self.pipeline._process_basic_info(item)
+
+        self.assertIn("Failed to insert product into DB", str(context.exception))
+    
+    @patch('Vimar.pipelines.ocrmypdf.ocr', side_effect=Exception("OCR failed"))
+    @patch('Vimar.pipelines.logging')
+    def test_make_ocr_exception(self, mock_logging, mock_ocr):
+        pdf = {'path': 'test.pdf'}
+        self.pipeline._makeOcr(pdf)
+
+        mock_ocr.assert_called_once()
+        mock_logging.error.assert_called_once()
+
+    @patch('Vimar.pipelines.DBPipeline._process_new_pdf')
+    @patch('Vimar.pipelines.FilePdf')
+    @patch('Vimar.pipelines.DbCheckOperationResponse')
+    def test_process_single_pdf_new_file(self, MockDbCheckOperationResponse, MockFilePdf, mock_process_new_pdf):
+        mock_response = MockDbCheckOperationResponse.return_value
+        mock_response.get_success.return_value = True
+        mock_response.get_message.return_value = ""  # simulate "new" file
+
+        self.pipeline.checkUpdatedFileUseCase.check_updated_file.return_value = mock_response
+
+        pdf = {'path': 'new.pdf', 'url': 'http://example.com/new.pdf'}
+        mock_spider = MagicMock()
+
+        self.pipeline._process_single_pdf(pdf, '456', mock_spider)
+
+        mock_process_new_pdf.assert_called_once_with(pdf, '456', mock_spider)
+        mock_spider.log.assert_called_with("PDF not in DB, processing...")
+
+
+
+
 if __name__ == '__main__':
     unittest.main()

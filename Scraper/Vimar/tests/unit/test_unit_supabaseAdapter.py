@@ -138,6 +138,34 @@ class TestSupabaseAdapter(unittest.TestCase):
         self.assertTrue(response.get_success())
         self.assertEqual(response.get_message(), "Update completed successfully")
         self.repository_mock.end_update.assert_called_once()
+    
+    def test_supabase_product_converter_none(self):
+        with self.assertRaises(ValueError):
+            self.adapter._SupabaseAdapter__supabase_product_converter(None)
+
+    def test_supabase_product_converter_invalid_etim(self):
+        product = MagicMock(spec=Product)
+        product.get_etim.return_value = "{invalid_json}"
+        
+        supabase_product = self.adapter._SupabaseAdapter__supabase_product_converter(product)
+        
+        self.assertEqual(supabase_product.etim, "{}")
+
+    def test_supabase_file_converter_none(self):
+        with self.assertRaises(ValueError):
+            self.adapter._SupabaseAdapter__supabase_file_converter(None)
+
+    def test_supabase_faq_converter_none(self):
+        with self.assertRaises(ValueError):
+            self.adapter._SupabaseAdapter__supabase_faq_converter(None)
+
+    def test_check_updated_file_repository_exception(self):
+        self.repository_mock.check_updated_file.side_effect = Exception("Check error")
+        file = MagicMock(spec=FilePdf)
+        
+        with self.assertRaises(Exception) as context:
+            self.adapter.check_updated_file(file)
+        self.assertIn("Check error", str(context.exception))
 
 if __name__ == "__main__":
     unittest.main()
