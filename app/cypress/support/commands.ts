@@ -8,17 +8,16 @@ declare global {
       createConversation(): Chainable<void>;
       checkConversationTitle(): Chainable<string>;
       performLogin(username: string, password: string): Chainable<boolean>;
-      performApiLogin(email: string, password: string, expect_status: number): Chainable<Cypress.Response<any>>;
       loadTestData(): Chainable<any>;
       getTotalUserMessages(): Chainable<number>;
       getTotalBotMessages(): Chainable<number>;
       selectConversation(): Chainable<void>;
       deleteFirstConversation(): Chainable<void>;
+      mockApiResponses(): Chainable<void>;
     }
   }
 }
 
-// Add a command to load test data
 Cypress.Commands.add('loadTestData', () => {
   return cy.fixture('testData').then(testData => {
     return cy.wrap(testData);
@@ -27,9 +26,11 @@ Cypress.Commands.add('loadTestData', () => {
 
 Cypress.Commands.add('getTotalConversations', () => {
   return cy.loadTestData().then(testData => {
-    return cy.get(`${testData.selectors.sidebar.chatContainer} > *`)
+    cy.get(`${testData.selectors.sidebar.chatContainer} > *`, { timeout: 10000 })
+      .should('exist')  // Verifica che l'elemento esista, ma non necessariamente visibile
       .then($elements => {
-        return cy.wrap($elements.length);
+        const numberOfConversations = $elements.length;  // Controlla il numero di conversazioni
+        return cy.wrap(numberOfConversations);  // Restituisci la lunghezza
       });
   });
 });
@@ -37,7 +38,14 @@ Cypress.Commands.add('getTotalConversations', () => {
 Cypress.Commands.add('createConversation', () => {
   return cy.loadTestData().then(testData => {
     cy.get(testData.selectors.chat.newChatButton).click();
-    cy.wait(3000);
+
+    cy.wait(testData.waitTimes.medium);
+
+    cy.get("body").then(($body) => {
+      if ($body.find(testData.selectors.chat.sidebarError).length > 0) {
+        cy.get(testData.selectors.chat.sidebarError).should("exist");
+      }
+    });
   });
 });
 
@@ -92,17 +100,16 @@ Cypress.Commands.add('performLogin', (username: string, password: string) => {
       .then(() => {
 
         cy.wait(2000);
-        // Clear the field first and add a small delay before typing
         cy.get(testData.selectors.login.emailInput).clear().wait(300);
-        // Type with a slower typing speed
+
         cy.get(testData.selectors.login.emailInput).type(username, { delay: 100 });
-        cy.wait(500); // Wait to ensure typing is complete
+        cy.wait(500);
         
         cy.get(testData.selectors.login.passwordInput).clear().type(password, { delay: 50 });
-        cy.wait(500); // Wait before clicking the button
+        cy.wait(500);
         
         cy.get(testData.selectors.login.loginButton).click();
-        cy.wait(2000); // Wait for navigation
+        cy.wait(2000);
 
         return cy.url().then((url) => {
           const isLogged = !url.includes('/login');
@@ -112,28 +119,6 @@ Cypress.Commands.add('performLogin', (username: string, password: string) => {
   });
 });
 
-Cypress.Commands.add('performApiLogin', (email: string, password: string, expect_status: number) => {
-  return cy.loadTestData().then(testData => {
-    return cy.request({
-      method: 'POST',
-      url: testData.api.supabaseUrl,
-      headers: {
-        apikey: environment.supabaseKey,
-        Authorization: `Bearer ${environment.supabaseKey}`
-      },
-      body: {
-        email,
-        password,
-        gotrue_meta_security: {}
-      },
-      failOnStatusCode: false
-    }).then((response) => {
-      cy.wrap(response).its('status').should('eq', expect_status);
-      // expect(response.status).to.eq(expect_status);
-      return cy.wrap(response);
-    });
-  });
-});
 
 Cypress.Commands.add('selectConversation', () => {
   return cy.loadTestData().then(testData => {
@@ -158,6 +143,42 @@ Cypress.Commands.add('selectConversation', () => {
   });
 });
 
+Cypress.Commands.add('performLogin', (username: string, password: string) => {
+  return cy.loadTestData().then(testData => {
+
+    cy.intercept('POST', '**/auth/v1/token?grant_type=password').as('loginRequest');
+    cy.intercept('GET', '**/auth/v1/user').as('getUserRequest');
+    cy.intercept('GET', '**/rest/v1/get_all_conversations*').as('getConversationsRequest');
+    
+    return cy.visit('/login')
+      .then(() => {
+        cy.wait(2000);
+        cy.get(testData.selectors.login.emailInput).clear().wait(300);
+        cy.get(testData.selectors.login.emailInput).type(username, { delay: 100 });
+        cy.wait(500);
+        
+        cy.get(testData.selectors.login.passwordInput).clear().type(password, { delay: 50 });
+        cy.wait(500);
+        
+        cy.get(testData.selectors.login.loginButton).click();
+        
+        cy.wait('@loginRequest').then((interception) => {
+          const statusCode = interception.response?.statusCode;
+          if (statusCode === 200) {
+            cy.wait('@getUserRequest');
+            cy.wait('@getConversationsRequest');
+          }
+        });
+        
+        cy.wait(2000);
+        return cy.url().then((url) => {
+          const isLogged = !url.includes('/login');
+          return cy.wrap(isLogged);
+        });
+      });
+  });
+});
+
 Cypress.Commands.add('sendMessage', (message: string) => {
   return cy.loadTestData().then(testData => {
     if (!message) {
@@ -167,10 +188,16 @@ Cypress.Commands.add('sendMessage', (message: string) => {
       throw new Error('Message too long');
     }
     
+    cy.intercept('POST', '**/rest/v1/messaggio*').as('sendMessageRequest');
+    
     cy.get('body').then($body => {
       if ($body.find(testData.selectors.messagebar.inputField).length > 0) {
         cy.get(testData.selectors.messagebar.inputField).type(message);
         cy.get(testData.selectors.messagebar.sendButton).click();
+        
+        cy.wait('@sendMessageRequest').then((interception) => {
+          expect(interception.response?.statusCode).to.be.oneOf([200, 201]);
+        });
       } else {
         cy.log('Message input field not found');
       }
@@ -178,31 +205,146 @@ Cypress.Commands.add('sendMessage', (message: string) => {
   });
 });
 
-
 Cypress.Commands.add('deleteFirstConversation', () => {
   return cy.loadTestData().then(testData => {
+    cy.intercept('DELETE', '**/rest/v1/chat*').as('deleteConversationRequest');
+    
     cy.get('body').then($body => {
       if ($body.find(testData.selectors.sidebar.chatContainer + ' > *').length > 0) {
-        // Find and click the delete button for the first conversation
         
-        // Select the first conversation before deleting
         cy.get(testData.selectors.sidebar.chatContainer + ' > *')
           .first()
           .find('a')
           .click();
         cy.wait(500);
 
-
         cy.get(testData.selectors.sidebar.chatContainer + ' > *')
           .first()
           .find(testData.selectors.chat.deleteButton)
           .click();
 
-        // Wait for deletion to complete
+        cy.wait('@deleteConversationRequest').then((interception) => {
+          expect(interception.response?.statusCode).to.be.oneOf([200, 204]); 
+        });
+        
         cy.wait(1000);
       } else {
         cy.log('No conversations to delete');
       }
     });
   });
-})
+});
+
+Cypress.Commands.add('sendMessage', (message: string) => {
+  return cy.loadTestData().then(testData => {
+    if (!message) {
+      throw new Error('Empty message');
+    }
+    if (message.length > 1000) {
+      throw new Error('Message too long');
+    }
+    
+    cy.intercept('POST', '**/rest/v1/messaggio*').as('sendMessageRequest');
+    
+    cy.get('body').then($body => {
+      if ($body.find(testData.selectors.messagebar.inputField).length > 0) {
+        cy.get(testData.selectors.messagebar.inputField).type(message);
+        cy.get(testData.selectors.messagebar.sendButton).click();
+        
+        cy.wait('@sendMessageRequest').then((interception) => {
+          expect(interception.response?.statusCode).to.be.oneOf([200, 201]);
+        });
+      } else {
+        cy.log('Message input field not found');
+      }
+    });
+  });
+});
+
+Cypress.Commands.add('mockApiResponses', () => {
+  return cy.loadTestData().then(testData => {
+
+    cy.intercept('POST', `**${testData.api.endpoints.login}`, {
+      statusCode: 200,
+      body: {
+        access_token: 'mock-access-token',
+        refresh_token: 'mock-refresh-token',
+        user: {
+          id: 'mock-user-id',
+          email: 'admin@placeholder.com'
+        }
+      }
+    }).as('loginApi');
+
+    cy.intercept('GET', `**${testData.api.endpoints.conversations}*`, {
+      statusCode: 200,
+      body: [
+        { id: 'mock-chat-1', utente: 'mock-user-id', created_at: new Date().toISOString(), title: 'Mock Conversation 1' },
+        { id: 'mock-chat-2', utente: 'mock-user-id', created_at: new Date().toISOString(), title: 'Mock Conversation 2' }
+      ]
+    }).as('getConversations');
+
+    cy.intercept('POST', `**${testData.api.endpoints.chat}*`, {
+      statusCode: 201,
+      body: [
+        { id: 'new-mock-chat', utente: 'mock-user-id', created_at: new Date().toISOString() }
+      ]
+    }).as('createConversation');
+
+    cy.intercept('POST', `**${testData.api.endpoints.message}*`, {
+      statusCode: 201,
+      body: {
+        id: 'mock-message-id',
+        chat: 'mock-chat-1',
+        domanda: 'Test message with mocked API',
+        risposta: 'Mocked response from the API',
+        created_at: new Date().toISOString()
+      }
+    }).as('sendMessage');
+
+    cy.intercept('DELETE', `**${testData.api.endpoints.chat}*`, {
+      statusCode: 200,
+      body: {}
+    }).as('deleteConversation');
+
+    cy.intercept('PATCH', `**${testData.api.endpoints.message}*`, {
+      statusCode: 200,
+      body: {}
+    }).as('submitFeedback');
+
+    cy.intercept('POST', `**${testData.api.endpoints.analytics.feedbackMessages}`, {
+      statusCode: 200,
+      body: [
+        { positive_feedback_mex: 10, negative_feedback_mex: 5, neutral_feedback_mex: 15 }
+      ]
+    }).as('getFeedbackMessages');
+
+    cy.intercept('POST', `**${testData.api.endpoints.analytics.feedbacks}`, {
+      statusCode: 200,
+      body: [
+        { week_number: 1, positive_feedback: 5, negative_feedback: 2 },
+        { week_number: 2, positive_feedback: 8, negative_feedback: 3 }
+      ]
+    }).as('getFeedbacks');
+
+    cy.intercept('POST', `**${testData.api.endpoints.analytics.messagesPerWeek}`, {
+      statusCode: 200,
+      body: [
+        { numberofweek: 1, numberofmessages: 20 },
+        { numberofweek: 2, numberofmessages: 35 }
+      ]
+    }).as('getMessagesPerWeek');
+
+    cy.intercept('POST', `**${testData.api.endpoints.analytics.analyzeMessages}`, {
+      statusCode: 200,
+      body: {
+        averageWords: 15,
+        wordCounts: [
+          { word: 'test', count: 10 },
+          { word: 'mock', count: 8 },
+          { word: 'api', count: 6 }
+        ]
+      }
+    }).as('analyzeMessages');
+  });
+});

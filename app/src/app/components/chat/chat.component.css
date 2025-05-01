@@ -166,19 +166,19 @@
     font-size: 15px;
 }
 
-.thumbs-up:hover {
+.thumbs-up:hover { 
     fill: #e5c200;
 }
 
-.thumbs-down:hover {
+.thumbs-down:hover { 
     fill: rgba(220, 38, 2, 0.683);
 }
 
-.feedback-button.selected.thumbs-up svg {
+.feedback-button.selected.thumbs-up svg { 
     fill: #e5c200;
 }
 
-.feedback-button.selected.thumbs-down  svg{
+.feedback-button.selected.thumbs-down svg { 
     fill: rgba(220, 38, 2, 0.683);
 }
 

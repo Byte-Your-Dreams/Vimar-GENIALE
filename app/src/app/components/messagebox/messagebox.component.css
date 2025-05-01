@@ -7,6 +7,10 @@
   margin-bottom: 0.5em;
 }
 
+.message-bar.hidden {
+  display: none;
+}
+
 .input-container {
   display: flex;
   align-items: center;

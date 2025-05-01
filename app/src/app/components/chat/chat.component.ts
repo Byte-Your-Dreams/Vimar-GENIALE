@@ -31,7 +31,7 @@ export class ChatComponent implements OnInit {
   public showError: boolean = false;
   private subscription: Subscription = new Subscription();
   private timeoutId: any;
-  private timeoutDuration: number = 300000; 
+  private timeoutDuration: number = 10000; 
 
 
   @ViewChild('messagesEndRef') messagesEndRef!: ElementRef;

@@ -1,4 +1,4 @@
-describe('Login API Test', () => {
+describe('Dashboard Tests', () => {
   let testData: any;
 
   before(() => {
@@ -6,64 +6,39 @@ describe('Login API Test', () => {
       testData = data;
     });
   });
-  
-  it('Should log in via API and access the dashboard', () => {
-    cy.performApiLogin('admin@placeholder.com', 'password', 200).then((response) => {
 
-      cy.visit('/');
-      cy.log(`Access token: ${response.body.access_token}`);
+  beforeEach(() => {
+    cy.performLogin(
+      testData.users.admin.username,
+      testData.users.admin.password
+    ).then((isLogged) => {
+      cy.log(`Login status: ${isLogged}`);
 
-      cy.setCookie('auth_token', response.body.access_token);
-      cy.log('Cookie set successfully (auth token)');
-      
-      cy.setCookie('refresh_token', response.body.refresh_token);
-      cy.log('Cookie set successfully (refresh token)');
-    
-      cy.wait(1000);
-      cy.visit('/dashboard');
-      cy.get('.loading-line').should('exist');
-      cy.wait(1000);
-      cy.get('.dashLink').should('contain', 'Dashboard').click();
-      cy.get('.title').should('contain', 'Pannello di Controllo');
-
+      if (isLogged) {
+        cy.visit('/dashboard');
+        cy.contains('Pannello di Controllo');
+      } else {
+        cy.log('User is NOW logged in');
+      }
     });
   });
 
-  it('Should fail login with invalid credentials', () => {
-    cy.performApiLogin('invaliduser@example.com', 'wrongpassword', 400).then((response) => {
-      expect(response.status).to.eq(400);
-    });
+  it('Should access the dashboard and verify the title', () => {
+    cy.get(testData.selectors.dashboard.title).should('contain', 'Pannello di Controllo');
+  });
+
+  it('Should show Update button', () => {
+    cy.get(testData.selectors.dashboard.updateButton).should('exist');
+    cy.get(testData.selectors.dashboard.updateButton).should('contain', 'Aggiorna');
+  });
+
+  it('Should show Charts', () => {
+    cy.wait(testData.waitTimes.medium);
+    
+    cy.get(testData.selectors.dashboard.charts.replace('%d', '1')).should('exist');
+    cy.get(testData.selectors.dashboard.charts.replace('%d', '2')).should('exist');
+    cy.get(testData.selectors.dashboard.charts.replace('%d', '3')).should('exist');
+    cy.get(testData.selectors.dashboard.charts.replace('%d', '4')).should('exist');
   });
 });
-
-// describe('Dashboard Tests', () => {
-//   beforeEach(() => {
-
-//     performApiLogin('admin@placeholder.com', 'password', 200).then((response) => {
-//       cy.setCookie('auth_token', response.body.access_token);
-//       cy.setCookie('refresh_token', response.body.refresh_token);
-//     });
-
-//     cy.wait(1000);
-//     cy.visit('/dashboard');
-//     cy.get('.navLink').contains('Chat').click();
-
-//   });
-
-//   it('Should access the dashboard and verify the title', () => {
-//     cy.get('.title').should('contain', 'Pannello di Controllo');
-//   });
-
-//   it('Should show Chart 1', () => {
-//     cy.get('.gridContainer > :nth-child(1)').should('contain', 'Andamento Generale');
-//   });
-
-//   it('Should show Chart 2', () => {
-//     cy.get('.gridContainer > :nth-child(2)').should('contain', 'Numero Messaggi per Settimana');
-//   });
-
-//   it('Should show Chart 3', () => {
-//     cy.get('.gridContainer > :nth-child(3)').should('contain', 'Numero messaggi feedback');
-//   });
-// });
 

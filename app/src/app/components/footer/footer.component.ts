@@ -92,10 +92,14 @@ export class FooterComponent implements OnInit {
 
     if (isPlatformBrowser(this.platformId)) {
       this.router.navigate(['/']).then(() => {
-        window.location.reload();
+        this.reloadPage();
       });
     }else {
       this.router.navigate(['/']);
     }
+  }
+
+  reloadPage(): void {
+    window.location.reload();
   }
 }

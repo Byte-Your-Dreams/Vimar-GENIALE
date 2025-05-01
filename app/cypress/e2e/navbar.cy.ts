@@ -1,4 +1,4 @@
-describe('Navbar page | NOT LOGGED IN', () => {
+describe('Navbar page', () => {
     let testData: any;
 
     before(() => {
@@ -8,7 +8,9 @@ describe('Navbar page | NOT LOGGED IN', () => {
     });
 
     beforeEach(() => {
-        cy.visit('/');
+        cy.loadTestData().then((testData) => {       
+            cy.visit('/');
+        });
     });
 
     it('Should render Navbar component', () => {
@@ -20,7 +22,7 @@ describe('Navbar page | NOT LOGGED IN', () => {
     });
 
     it('Should check if Navbar component has a title', () => {
-        cy.get(testData.selectors.navbar.title).contains('Vimar Geniale');
+        cy.get(testData.selectors.navbar.title).contains('Vimar GENIALE');
     });
 
     it('Should check if Navbar component has a logo', () => {

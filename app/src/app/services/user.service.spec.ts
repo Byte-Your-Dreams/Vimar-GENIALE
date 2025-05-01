@@ -1,103 +1,93 @@
-// import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-// import { UserService } from './user.service';
-// import { SupabaseService } from './supabase.service';
-// import { BehaviorSubject, of } from 'rxjs';
+import { TestBed } from '@angular/core/testing';
+import { UserService } from './user.service';
+import { SupabaseService } from './supabase.service';
+import { PLATFORM_ID } from '@angular/core';
+import { of } from 'rxjs';
 
-// describe('UserService', () => {
-//   let service: UserService;
-//   let supabaseServiceMock: any;
-//   let mockUser = { id: '123', is_anonymous: false };
-//   let mockAnonUser = { id: 'anon-123', is_anonymous: true };
+describe('UserService', () => {
+    let service: UserService;
+    let mockSupabaseService: any;
+    describe('in browser environment', () => {
+    beforeEach(() => {
+        mockSupabaseService = {
+            getUser: jasmine.createSpy('getUser').and.returnValue(Promise.resolve({ data: { user: { id: 'user123' } } })),
+            signInAnonymously: jasmine.createSpy('signInAnonymously').and.returnValue(Promise.resolve({ data: { user: { id: 'anon123' } } })),
+        };
 
-//   beforeEach(() => {
-//     // Create a mock for SupabaseService
-//     supabaseServiceMock = jasmine.createSpyObj('SupabaseService', [
-//       'getUser',
-//       'signInAnonymously'
-//     ]);
+        TestBed.configureTestingModule({
+            providers: [
+                UserService,
+                { provide: SupabaseService, useValue: mockSupabaseService },
+                { provide: PLATFORM_ID, useValue: 'browser' }, // 默认模拟为浏览器环境
+            ],
+        });
 
-//     TestBed.configureTestingModule({
-//       providers: [
-//         UserService,
-//         { provide: SupabaseService, useValue: supabaseServiceMock }
-//       ]
-//     });
+        service = TestBed.inject(UserService);
+    });
 
-//     service = TestBed.inject(UserService);
-//   });
+    it('should be created', () => {
+        expect(service).toBeTruthy();
+    });
 
-//   it('should create the service correctly', () => {
-//     expect(service).toBeTruthy();
-//   });
+    it('should initialize user if user exists', async () => {
+        await service.initUser();
 
-//   describe('initUser()', () => {
-//     it('should initialize user when a logged-in user exists', fakeAsync(async () => {
-//       // Mock an existing user
-//       supabaseServiceMock.getUser.and.resolveTo({ data: { user: mockUser } });
-      
-//       await service.initUser();
-//       tick();
-      
-//       expect(service.getCurrentUser()).toEqual(mockUser);
-//       expect(supabaseServiceMock.signInAnonymously).not.toHaveBeenCalled();
-//       expect(service.isReady$.subscribe(isReady => expect(isReady).toBeTrue()));
-//     }));
+        expect(mockSupabaseService.getUser).toHaveBeenCalled();
+        expect(service.getCurrentUser()).toEqual({ id: 'user123' });
+    });
 
-//     it('should create an anonymous user when no user exists', fakeAsync(async () => {
-//       // Mock no user
-//       supabaseServiceMock.getUser.and.resolveTo({ data: { user: null } });
-//       supabaseServiceMock.signInAnonymously.and.resolveTo({ data: { user: mockAnonUser } });
-      
-//       await service.initUser();
-//       tick();
-      
-//       expect(service.getCurrentUser()).toEqual(mockAnonUser);
-//       expect(supabaseServiceMock.signInAnonymously).toHaveBeenCalled();
-//     }));
+    it('should initialize anonymous user if no user exists', async () => {
+        mockSupabaseService.getUser.and.returnValue(Promise.resolve({ data: { user: null } }));
 
-//     it('should handle initialization errors', fakeAsync(async () => {
-//       // Mock an error
-//       supabaseServiceMock.getUser.and.rejectWith(new Error('Connection failed'));
-//       spyOn(console, 'error');
-      
-//       await service.initUser();
-//       tick();
-      
-//       expect(console.error).toHaveBeenCalled();
-//       expect(service.isReady$.subscribe(isReady => expect(isReady).toBeTrue()));
-//     }));
-//   });
+        await service.initUser();
 
-//   describe('getCurrentUser()', () => {
-//     it('should return the current user', () => {
-//       service['userSubject'].next(mockUser);
-//       expect(service.getCurrentUser()).toEqual(mockUser);
-//     });
-//   });
+        expect(mockSupabaseService.getUser).toHaveBeenCalled();
+        expect(mockSupabaseService.signInAnonymously).toHaveBeenCalled();
+        expect(service.getCurrentUser()).toEqual({ id: 'anon123' });
+    });
 
-//   describe('isLoggedIn()', () => {
-//     it('should return true when a user exists and is not anonymous', (done) => {
-//       service['userSubject'].next(mockUser);
-//       service.isLoggedIn().subscribe(result => {
-//         expect(result).toBeTrue();
-//         done();
-//       });
-//     });
+    it('should handle errors during user initialization', async () => {
+        mockSupabaseService.getUser.and.throwError('Error fetching user');
 
-//     it('should return false when the user is anonymous', (done) => {
-//       service['userSubject'].next(mockAnonUser);
-//       service.isLoggedIn().subscribe(result => {
-//         expect(result).toBeFalse();
-//         done();
-//       });
-//     });
+        await service.initUser();
 
-//     it('should return false when there is no user', (done) => {
-//       service['userSubject'].next(null);
-//       service.isLoggedIn().subscribe(result => {
-//         expect(result).toBeFalse();
-//         done();
-//       });
-//     });
-//   });
-// });
+        expect(mockSupabaseService.getUser).toHaveBeenCalled();
+        expect(service.getCurrentUser()).toBeNull();
+    });
+
+    it('should set isReady$ to true after initialization', async () => {
+        await service.initUser();
+
+        service.isReady$.subscribe((isReady) => {
+            expect(isReady).toBeTrue();
+        });
+    });
+});
+
+describe('in non-browser environment', () => {
+    beforeEach(() => {
+        mockSupabaseService = {
+            getUser: jasmine.createSpy('getUser').and.returnValue(Promise.resolve({ data: { user: { id: 'user123' } } })),
+            signInAnonymously: jasmine.createSpy('signInAnonymously').and.returnValue(Promise.resolve({ data: { user: { id: 'anon123' } } })),
+        };
+
+        TestBed.configureTestingModule({
+            providers: [
+                UserService,
+                { provide: SupabaseService, useValue: mockSupabaseService },
+                { provide: PLATFORM_ID, useValue: 'server' }, // 模拟服务器环境
+            ],
+        });
+
+        service = TestBed.inject(UserService);
+    });
+
+    it('should set isReady$ to true immediately in non-browser environments', async () => {
+        await service.initUser();
+
+        service.isReady$.subscribe((isReady) => {
+            expect(isReady).toBeTrue();
+        });
+    });
+});
+})

@@ -1,4 +1,4 @@
-<div class="message-bar">
+<div class="message-bar" [ngClass]="{'hidden': !currentConversation}">
   <div class="input-container">
     <input type="text" class="input-field" placeholder="Inserisci un messaggio..." [(ngModel)]="currentMessage"
       (input)="handleInputChange($event)" (keydown)="handleKeyDown($event)"

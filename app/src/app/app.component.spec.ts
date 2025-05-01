@@ -11,10 +11,8 @@ describe('AppComponent', () => {
   let loadingSubject: BehaviorSubject<boolean>;
 
   beforeEach(async () => {
-    // 创建 BehaviorSubject 来模拟 loading 状态
     loadingSubject = new BehaviorSubject<boolean>(false);
 
-    // 创建 mock 的 LoadingService
     loadingServiceMock = {
       loading$: loadingSubject.asObservable()
     };

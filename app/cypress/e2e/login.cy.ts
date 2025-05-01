@@ -1,5 +1,4 @@
-describe('Dashboard page', () => {
-
+describe('Login page', () => {
     let testData: any;
 
     before(() => {
@@ -8,12 +7,22 @@ describe('Dashboard page', () => {
       });
     });
 
+    it('Should fail login with invalid credentials', () => { 
+        cy.performLogin(
+            testData.users.invalid.username, 
+            testData.users.invalid.password
+        ).then((isLogged) => {
+            expect(isLogged).to.be.false;
+        });
+    });
+
     it('Should show dashboard for logged-in users', () => {
         cy.performLogin(
             testData.users.admin.username, 
             testData.users.admin.password
         ).then((isLogged) => {
             cy.log(`Login status: ${isLogged}`);
+            
             if (isLogged) {
                 cy.visit('/dashboard');
                 cy.contains('Pannello di Controllo');
@@ -23,7 +32,7 @@ describe('Dashboard page', () => {
         });
     });
 
-    it('Should show login prompt for non-logged-in users', () => {
+    it('Should show login prompt for non-logged-in users', () => { 
         cy.performLogin(
             testData.users.invalid.username, 
             testData.users.invalid.password

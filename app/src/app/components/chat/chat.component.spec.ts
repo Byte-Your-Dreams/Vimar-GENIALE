@@ -9,6 +9,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { MarkdownModule } from 'ngx-markdown';
 import { CommonModule } from '@angular/common';
 import { MessageboxComponent } from '../messagebox/messagebox.component';
+import { FeedbackDialogComponent } from '../feedback-dialog/feedback-dialog.component'; // Adjust the path as needed
 
 describe('ChatComponent', () => {
     let component: ChatComponent;
@@ -60,8 +61,9 @@ describe('ChatComponent', () => {
                 CommonModule,
                 HttpClientModule,
                 MarkdownModule,
-                ChatComponent, // Moved from declarations to imports
-                MessageboxComponent // Also needs to be imported if it's standalone
+                MessageboxComponent,
+                FeedbackDialogComponent,
+                MessageboxComponent
             ],
             providers: [
                 { provide: ConversationService, useValue: mockConversationService },
@@ -88,11 +90,22 @@ describe('ChatComponent', () => {
             expect(component.currentConversation).toEqual(testConversation);
         });
 
-        it('should subscribe to user$ and get chats if user exists', () => {
+        it('should subscribe to user$', () => {
             component.ngOnInit();
             expect(mockSupabaseService.getChatsForUser).toHaveBeenCalledWith('test-user');
         });
-
+        it('should set userId when user is available', () => {
+            component.ngOnInit();
+            expect(component['userId']).toBe('test-user');
+        });
+        it('should call getChatsForUser when userId is available', () => {
+            component.ngOnInit();
+            expect(mockSupabaseService.getChatsForUser).toHaveBeenCalledWith('test-user');
+        });
+        it('should call getChatsForUser when userId is available', () => {
+            component.ngOnInit();
+            expect(mockSupabaseService.getChatsForUser).toHaveBeenCalledWith('test-user');
+        });
     }
     );
 
@@ -118,8 +131,6 @@ describe('ChatComponent', () => {
                     { domanda: 'test question', risposta: null }
                 ]
             };
-
-            // Simulate answer coming in
             mockConversationService.currentMessages$ = of({
                 type: mockConversationService.MESSAGE_TYPE.UPDATE,
                 data: { id: 1, domanda: 'test question', risposta: 'answer' }
@@ -131,18 +142,89 @@ describe('ChatComponent', () => {
     });
 
     describe('feedback handling', () => {
-        it('should open feedback dialog and submit feedback', async () => {
+        it('should open feedback dialog with positive or negative', () => {
+            component.handleFeedbackClick('thumbsUp');
+            expect(mockDialog.open).toHaveBeenCalledWith(FeedbackDialogComponent, {
+                width: '250px',
+                data: { isPositive: true }
+            });
+
+            component.handleFeedbackClick('thumbsDown');
+            expect(mockDialog.open).toHaveBeenCalledWith(FeedbackDialogComponent, {
+                width: '250px',
+                data: { isPositive: false }
+            });
+        });
+
+        it('should call submitFeedback with correct parameters', async () => {
+            mockDialog.open.and.returnValue({
+                afterClosed: () => of('test feedback')
+            });
+
             component.currentConversation = {
-                messages: [
-                    { id: 123, domanda: 'test', risposta: 'answer' }
-                ]
+                messages: [{ id: 123, domanda: 'test', risposta: 'answer' }]
             };
 
             await component.handleFeedbackClick('thumbsUp');
-
-            expect(mockDialog.open).toHaveBeenCalled();
             expect(mockSupabaseService.submitFeedback).toHaveBeenCalledWith(123, true, 'test feedback');
-            expect(component.selectedFeedback).toBe('thumbsUp');
+        });
+
+        it('should show feedback changed', fakeAsync(() => {
+            mockDialog.open.and.returnValue({
+                afterClosed: () => of('test feedback')
+            });
+
+            component.currentConversation = {
+                messages: [{ id: 123, domanda: 'test', risposta: 'answer' }]
+            };
+
+            component.handleFeedbackClick('thumbsUp');
+            tick();
+            expect(component.showFeedbackSuccess).toBeTrue();
+
+            tick(5000);
+            expect(component.showFeedbackSuccess).toBeFalse();
+        }));
+
+        it('should handle errors when submitFeedback fails', async () => {
+            mockDialog.open.and.returnValue({
+                afterClosed: () => of('test feedback')
+            });
+
+            mockSupabaseService.submitFeedback.and.returnValue(Promise.reject('Error submitting feedback'));
+
+            component.currentConversation = {
+                messages: [{ id: 123, domanda: 'test', risposta: 'answer' }]
+            };
+
+            spyOn(console, 'error');
+            await component.handleFeedbackClick('thumbsUp');
+            expect(console.error).toHaveBeenCalledWith('Error submitting feedback:', 'Error submitting feedback');
+        });
+        it('should not call submitFeedback if messageId is not available', async () => {
+            mockDialog.open.and.returnValue({
+                afterClosed: () => of('test feedback')
+            });
+
+            component.currentConversation = {
+                messages: [{ domanda: 'test', risposta: 'answer' }]
+            };
+
+            await component.handleFeedbackClick('thumbsUp');
+            expect(mockSupabaseService.submitFeedback).not.toHaveBeenCalled();
+        });
+
+        it('should not call submitFeedback if feedback is undefined', async () => {
+            mockDialog.open.and.returnValue({
+                afterClosed: () => of(undefined)
+            });
+
+            component.currentConversation = {
+                messages: [{ id: 123, domanda: 'test', risposta: 'answer' }]
+            };
+
+            await component.handleFeedbackClick('thumbsUp');
+            expect(mockSupabaseService.submitFeedback).not.toHaveBeenCalled();
         });
     });
 
@@ -170,19 +252,31 @@ describe('ChatComponent', () => {
         }));
 
         it('should set selectedChatId when selecting chat', () => {
-            // Mock the chats array
             Object.defineProperty(component, 'chats', {
                 value: [{ id: 1, name: 'Chat 1' }, { id: 2, name: 'Chat 2' }],
                 writable: true,
             });
-
-            // Call the selectChat method
             component.selectChat(1);
-
-            // Assert that setCurrentConversation is called with the correct chat object
             expect(mockConversationService.setCurrentConversation).toHaveBeenCalledWith(
                 jasmine.objectContaining({ id: 1, name: 'Chat 1' })
             );
+        });
+        it('should scroll to bottom', fakeAsync(() => {
+            spyOn(component, 'scrollToBottom').and.callThrough();
+            component.scrollToBottom();
+            tick(1000);
+            expect(component.scrollToBottom).toHaveBeenCalled();
+        }));
+
+        it('should handle null response from newChat', async () => {
+            mockSupabaseService.newChat.and.returnValue(Promise.resolve(null));
+            component['userId'] = 'test-user';
+
+            await component.newChat();
+
+            expect(mockSupabaseService.newChat).toHaveBeenCalledWith('test-user');
+            expect(mockSupabaseService.getChatsForUser).toHaveBeenCalledWith('test-user');
+            expect(mockConversationService.setCurrentConversation).not.toHaveBeenCalled();
         });
     });
 
@@ -206,5 +300,110 @@ describe('ChatComponent', () => {
             expect(component.isTimeoutMessage(timeoutMessage)).toBeTrue();
             expect(component.isTimeoutMessage(normalMessage)).toBeFalse();
         });
+        it('should return false for undefined messages', () => {
+            const undefinedMessage = undefined;
+            expect(component.isTimeoutMessage(undefinedMessage)).toBeFalse();
+        });
+        it('should return false for messages without risposta property', () => {
+            const messageWithoutRisposta = { domanda: 'test question' };
+            expect(component.isTimeoutMessage(messageWithoutRisposta)).toBeFalse();
+        });
     });
+    
+    it('should log when user is null', () => {
+        spyOn(console, 'log');
+        mockUserService.user$ = of(null); // forza utente null
+        component.ngOnInit();
+        expect(console.log).toHaveBeenCalledWith('[Chat] User not ready yet');
+      });
+     
+      it('should not create new chat if userId is null', async () => {
+        component['userId'] = null;
+        await component.newChat();
+        expect(mockSupabaseService.newChat).not.toHaveBeenCalled();
+      });
+      
+      it('should show and hide error if chat limit is reached', fakeAsync(() => {
+        component['userId'] = 'test-user';
+        component['chats'] = [{id: 1}, {id: 2}, {id: 3}];
+      
+        component.newChat();
+        expect(component.showError).toBeTrue();
+      
+        tick(5000); // aspetta che l'errore venga nascosto
+        expect(component.showError).toBeFalse();
+      }));
+    
+      it('should handle error in scrollToBottom gracefully', fakeAsync(() => {
+        component.messagesEndRef = {
+          nativeElement: {
+            scrollIntoView: () => {
+              throw new Error('scroll failed');
+            }
+          }
+        } as any;
+      
+        spyOn(console, 'error');
+      
+        component.scrollToBottom();
+        tick(100); // esegue il setTimeout
+      
+        expect(console.error).toHaveBeenCalledWith('Scroll to botton failed:', jasmine.any(Error));
+      }));
+      it('should scroll to bottom if element exists', fakeAsync(() => {
+        const scrollSpy = jasmine.createSpy('scrollIntoView');
+        component.messagesEndRef = {
+          nativeElement: { scrollIntoView: scrollSpy }
+        } as any;
+      
+        component.scrollToBottom();
+        tick(1000);
+        expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
+      }));
+
+      it('should not throw if messagesEndRef is undefined', fakeAsync(() => {
+        component.messagesEndRef = null as any;
+        spyOn(console, 'error');
+        expect(() => {
+          component.scrollToBottom();
+          tick(1000);
+        }).not.toThrow();
+        expect(console.error).not.toHaveBeenCalled();
+      }));
+      
+      it('should clear existing timeout before starting new one', () => {
+        const clearSpy = spyOn(window, 'clearTimeout').and.callThrough();
+        component['timeoutId'] = setTimeout(() => {}, 5000);
+        component.startTimeout();
+        expect(clearSpy).toHaveBeenCalled();
+      });
+      
+      it('should handle undefined messagesEndRef gracefully', fakeAsync(() => {
+        component.messagesEndRef = undefined as any;
+        expect(() => {
+          component.scrollToBottom();
+          tick(100);
+        }).not.toThrow();
+      }));
+
+      it('should call startTimeout if last message has domanda and no risposta', () => {
+        const spy = spyOn(component, 'startTimeout');
+        const messages = [{ domanda: 'Domanda?', risposta: null }];
+        mockConversationService.currentConversation$ = of({ messages });
+    
+        component.ngOnInit();
+    
+        expect(spy).toHaveBeenCalled();
+      });
+    
+      it('should not call startTimeout if last message has no domanda and no risposta', () => {
+        const spy = spyOn(component, 'startTimeout');
+        const messages = [{}];
+        mockConversationService.currentConversation$ = of({ messages });
+    
+        component.ngOnInit();
+    
+        expect(spy).not.toHaveBeenCalled();
+      });
+    
 });

@@ -13,26 +13,28 @@ describe('Feedback System', () => {
       testData.users.admin.username, 
       testData.users.admin.password
     );
-
-    cy.getTotalConversations().then((totalConversations) => {
-     if (totalConversations > 2) {
-      cy.deleteFirstConversation();
-     }
-    })
-
-
     cy.createConversation();
+    cy.wait(testData.waitTimes.short);
     cy.sendMessage(testData.messages.feedback);
   });
 
   it('Should submit positive feedback', () => {
-    cy.get(testData.selectors.feedback.thumbsUp).click();
-    cy.get(testData.selectors.feedback.dialogTitle).should('contain', 'Feedback Positivo');
+    cy.get(testData.selectors.feedback.thumbsUp, { timeout: 60000 }).click();
+    cy.wait(testData.waitTimes.short);
+    cy.get(testData.selectors.feedback.dialogTitle).should('contain', 'piaciuto?');
+    cy.get(testData.selectors.feedback.textarea).type('This is a test reason');
+    cy.get(testData.selectors.feedback.submitButton).should('be.enabled').click();
   });
 
   it('Should require reason for negative feedback', () => {
-    cy.get(testData.selectors.feedback.thumbsDown).click();
-    cy.get(testData.selectors.feedback.textarea).should('be.required');
-    cy.get(testData.selectors.feedback.submitButton).should('be.disabled');
+    cy.get(testData.selectors.feedback.thumbsDown, { timeout: 60000 }).click();
+    cy.wait(testData.waitTimes.short);
+    cy.get(testData.selectors.feedback.dialogTitle).should('contain', 'Cosa possiamo migliorare?');
+    cy.get(testData.selectors.feedback.textarea).type('This is a test reason');
+    cy.get(testData.selectors.feedback.submitButton).should('be.enabled').click();
   });
+
+  afterEach(() => {
+    cy.deleteFirstConversation();
+  })
 });

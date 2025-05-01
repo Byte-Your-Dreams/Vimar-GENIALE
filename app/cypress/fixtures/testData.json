@@ -3,7 +3,7 @@
     "admin": {
       "username": "admin@placeholder.com",
       "email": "admin@placeholder.com",
-      "password": "password"
+      "password": "admin0"
     },
     "invalid": {
       "username": "invaliduser@example.com",
@@ -26,7 +26,9 @@
       "botMessage": ".bot-message",
       "noConversation": ".no-conversation p",
       "deleteButton": ".deleteChat",
-      "newChatButton": "#newChat"
+      "newChatButton": "#newChat",
+      "message": ".message",
+      "sidebarError": ".sidebarError"
     },
     "messagebar": {
       "inputField": ".input-field",
@@ -52,12 +54,44 @@
     "feedback": {
       "thumbsUp": ".thumbs-up",
       "thumbsDown": ".thumbs-down",
-      "dialogTitle": ".dialog-title",
+      "dialogTitle": ".dialog-content",
       "textarea": "textarea",
-      "submitButton": "button:contains(\"Invia\")"
+      "submitButton": "button:contains(\"Invia\")",
+      "dialog": "#feedback",
+      "errorMessage": ".error-message",
+      "submitButtonClass": ".submit-button"
+    },
+    "dashboard": {
+      "title": ".title",
+      "updateButton": ".update-button",
+      "loadingContainer": ".loading-container",
+      "charts": ":nth-child(%d) > h2"
     }
   },
   "api": {
-    "supabaseUrl": "https://vqgvzelfzrmefuypovhq.supabase.co/auth/v1/token?grant_type=password"
+    "baseUrl": "https://localhost:8000",
+    "supabaseUrl": "https://localhost:8000/auth/v1/token?grant_type=password",
+    "endpoints": {
+      "signup": "/auth/v1/signup",
+      "signupFull": "https://localhost:8000/auth/v1/signup",
+      "login": "/auth/v1/token?grant_type=password",
+      "user": "/auth/v1/user",
+      "conversations": "/rest/v1/get_all_conversations",
+      "chat": "/rest/v1/chat",
+      "message": "/rest/v1/messaggio",
+      "feedback": "/rest/v1/feedback",
+      "forbiddenWords": "/assets/forbidden-words.json",
+      "analytics": {
+        "feedbacks": "/rest/v1/rpc/get_number_of_feedbacks",
+        "messagesPerWeek": "/rest/v1/rpc/get_messages_per_week",
+        "feedbackMessages": "/rest/v1/rpc/get_number_of_feedback_messages",
+        "analyzeMessages": "/functions/v1/analyze_messages"
+      }
+    }
+  },
+  "waitTimes": {
+    "short": 1000,
+    "medium": 2000,
+    "long": 3000
   }
 }

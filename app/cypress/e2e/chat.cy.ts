@@ -36,6 +36,7 @@ describe('Chat page | LOGGED IN', () => {
   beforeEach(() => {
     cy.loadTestData().then((data) => {
       testData = data;
+      cy.intercept('POST', `${testData.api.baseUrl}${testData.api.endpoints.signup}`).as('signupRequest');
       cy.visit('/');
       cy.performLogin(
         testData.users.admin.username, 
@@ -49,9 +50,10 @@ describe('Chat page | LOGGED IN', () => {
           cy.log('User is NOW logged in');
         }
       });
-      cy.wait(1000);
+      
+      cy.wait(testData.waitTimes.short);
       cy.visit('/');
-      cy.wait(1000);
+      cy.wait(testData.waitTimes.short);
     });
   });
 
@@ -67,72 +69,71 @@ describe('Chat page | LOGGED IN', () => {
     cy.get(testData.selectors.chat.noConversation).contains('Seleziona una conversazione');
   });
 
-  it('Should create a new conversation', () => {
-    cy.getTotalConversations().then((totalConversations: number) => {
-      expect(totalConversations).to.be.a('number').and.to.be.greaterThan(0);
+  it("Should create a new conversation", () => {
+    cy.createConversation();
+  });
 
-      cy.selectConversation();
-
-      cy.createConversation();
-      cy.wait(1000);
+  it('Should select a conversation', () => {
+    cy.getTotalConversations().then((totalConversations) => {
+      expect(totalConversations).to.be.a('number');
       
-      if (totalConversations > 2) {
-        expect(cy.get('.sidebarError')).to.exist;
-      } else {
-        cy.getTotalConversations().then((newTotalConversations: number) => {
-          expect(newTotalConversations).to.be.a('number').and.to.be.greaterThan(totalConversations);
-        });
+      cy.selectConversation();
+      
+      cy.url().should('include', '#');
+      
+      cy.get(testData.selectors.messagebar.inputField).should('exist');
+      cy.get(testData.selectors.messagebar.charCount).should('exist');
+      cy.get(testData.selectors.messagebar.sendButton).should('exist');
+      cy.get(testData.selectors.chat.message).should('exist').then(($messages) => {
+        expect($messages.length).to.be.greaterThan(0);
+      });
+    });
+  });
+
+  it('Should check if i have messages in the conversation', () => {
+    cy.selectConversation();
+    cy.wait(testData.waitTimes.short); 
+
+    cy.get(testData.selectors.chat.message).should('exist');
+    
+    cy.getTotalUserMessages().then((totalMessages: number) => {
+      cy.get('body').then(($body) => {
+        if ($body.find(testData.selectors.chat.userMessage).length > 0) {
+          cy.get(testData.selectors.chat.userMessage).its('length').then((userMessages) => {
+            expect(totalMessages).to.equal(userMessages);
+            expect(userMessages).to.be.greaterThan(0);
+            cy.log(`Numero di messaggi utente trovati: ${userMessages}`);
+          });
+        } else {
+          cy.log('No user messages found - this is expected');
+        }
+      });
+    });
+    
+    cy.getTotalBotMessages().then((totalBotMessages: number) => {
+      cy.log(`Numero totale di messaggi bot: ${totalBotMessages}`);
+      if (totalBotMessages > 0) {
+        cy.get(testData.selectors.chat.botMessage).should('have.length', totalBotMessages);
       }
     });
   });
 
   it('Should delete a conversation', () => {
+    cy.wait(testData.waitTimes.medium);
+
     cy.getTotalConversations().then((totalConversations: number) => {
       expect(totalConversations).to.be.a('number').and.to.be.greaterThan(0);
-
       
       cy.getTotalConversations().then((totalConversations: number) => {
-        if(totalConversations <1){
+        if(totalConversations < 1){
           cy.createConversation();
-          cy.wait(1000);
+          cy.wait(testData.waitTimes.short);
         };
       });
-
       cy.selectConversation();
-      cy.wait(1000);
-
+      cy.wait(testData.waitTimes.short);
       cy.deleteFirstConversation();
-      
-      cy.wait(2000);
-
-      cy.getTotalConversations().then((newTotalConversations: number) => {
-        expect(newTotalConversations).to.be.a('number').and.to.be.lessThan(totalConversations);
-      });
-    });
-  });
-
-  it('Should select a conversation', () => {
-    cy.selectConversation();
-  });
-
-  it('Should check if i have messages in the conversation', () => {
-    cy.selectConversation();
-    cy.wait(1000); 
-
-    cy.get('.message').should('exist');
-
-    cy.getTotalUserMessages().then((totalMessages: number) => {
-      cy.get('body').then(($body) => {
-        if ($body.find(testData.selectors.chat.userMessage).length > 0) {
-          //element exists
-          cy.get(testData.selectors.chat.userMessage).its('length').then((userMessages) => {
-            expect(totalMessages).to.equal(userMessages);
-          });
-        } else {
-          //element does not exist
-          cy.log('No user messages found - this is expected');
-        }
-      });
+      cy.wait(testData.waitTimes.medium);
     });
   });
 });

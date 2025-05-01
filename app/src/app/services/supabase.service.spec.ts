@@ -1,211 +1,575 @@
-// import { TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
-// import { SupabaseService } from './supabase.service';
-// import { CookieService } from 'ngx-cookie-service';
-// import { createClient, SupabaseClient } from '@supabase/supabase-js';
-// import { AuthChangeEvent, Session } from '@supabase/supabase-js';
-// import { BehaviorSubject, of } from 'rxjs';
-// import { NgZone, PLATFORM_ID } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { SupabaseService } from './supabase.service';
+import { CookieService } from 'ngx-cookie-service';
+import { PLATFORM_ID } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import { isPlatformBrowser } from '@angular/common';
+import { on } from 'events';
 
-// // 创建 SupabaseClient 的模拟实现
-// const mockSupabaseClient = jasmine.createSpyObj('SupabaseClient', {
-//   auth: {
-//     signInAnonymously: Promise.resolve({ data: { user: { id: 'anon-123' } }, error: null }),
-//     signInWithPassword: Promise.resolve({ data: { session: {} }, error: null }),
-//     getUser: Promise.resolve({ data: { user: { id: 'user-123' } } }),
-//     getSession: Promise.resolve({ data: { session: { access_token: 'test-token' } } }),
-//     setSession: Promise.resolve({ data: null, error: null }),
-//     signOut: Promise.resolve({ error: null }),
-//     onAuthStateChange: (callback: any) => ({
-//       data: { subscription: {} },
-//       unsubscribe: () => {}
-//     })
-//   },
-//   from: jasmine.createSpy().and.returnValue({
-//     select: jasmine.createSpy().and.returnValue({
-//       eq: jasmine.createSpy().and.returnValue(Promise.resolve({ data: [], error: null }))
-//     }),
-//     insert: jasmine.createSpy().and.returnValue({
-//       select: jasmine.createSpy().and.returnValue(Promise.resolve({ data: [{}], error: null }))
-//     }),
-//     delete: jasmine.createSpy().and.returnValue({
-//       eq: jasmine.createSpy().and.returnValue(Promise.resolve({ error: null }))
-//     }),
-//     update: jasmine.createSpy().and.returnValue({
-//       eq: jasmine.createSpy().and.returnValue(Promise.resolve({ error: null }))
-//     })
-//   }),
-//   channel: jasmine.createSpy().and.returnValue({
-//     on: jasmine.createSpy().and.returnValue({
-//       subscribe: jasmine.createSpy()
-//     })
-//   }),
-//   rpc: jasmine.createSpy().and.returnValue(Promise.resolve({ data: [], error: null })),
-//   functions: {
-//     invoke: jasmine.createSpy().and.returnValue(Promise.resolve({ data: {}, error: null }))
-//   }
-// });
+describe('SupabaseService', () => {
+  let service: SupabaseService;
+  let mockCookieService: any;
+  let mockSupabaseClient: any;
 
-// describe('SupabaseService', () => {
-//   let service: SupabaseService;
-//   let cookieService: jasmine.SpyObj<CookieService>;
-//   let ngZone: NgZone;
+  beforeEach(() => {
+    mockCookieService = {
+      get: jasmine.createSpy('get').and.returnValue(''),
+      set: jasmine.createSpy('set'),
+    };
 
-//   beforeEach(() => {
-//     // 创建模拟依赖项
-//     cookieService = jasmine.createSpyObj('CookieService', ['get', 'set', 'delete']);
-//     ngZone = { runOutsideAngular: (fn: Function) => fn() } as any;
 
-//     TestBed.configureTestingModule({
-//       providers: [
-//         SupabaseService,
-//         { provide: CookieService, useValue: cookieService },
-//         { provide: NgZone, useValue: ngZone },
-//         { provide: PLATFORM_ID, useValue: 'browser' }
-//       ]
-//     });
 
-//     // 替换实际的 Supabase 客户端
-//     spyOn(createClient, 'createClient').and.returnValue(mockSupabaseClient);
-//     service = TestBed.inject(SupabaseService);
-//   });
+    mockSupabaseClient = {
+      auth: {
+        signInAnonymously: jasmine.createSpy('signInAnonymously').and.returnValue(Promise.resolve({ data: { user: { id: 'anon123' } } })),
+        signInWithPassword: jasmine.createSpy('signInWithPassword').and.returnValue(
+          Promise.resolve({
+            data: {
+              session: {
+                access_token: 'session123',
+                refresh_token: 'refresh123',
+                expires_in: 3600,
+                token_type: 'bearer',
+                user: {
+                  id: 'user123',
+                  email: 'test@example.com',
+                  app_metadata: {},
+                  user_metadata: {},
+                  aud: 'authenticated',
+                  created_at: '2025-04-18T00:00:00.000Z',
+                },
+              },
+            },
+            error: null,
+          })
+        ),
+        getUser: jasmine.createSpy('getUser').and.returnValue(Promise.resolve({ data: { user: { id: 'user123' } } })),
+        getSession: jasmine.createSpy('getSession').and.returnValue(
+          Promise.resolve({
+            data: {
+              session: {
+                access_token: 'session123',
+                refresh_token: 'refresh123',
+                expires_in: 3600,
+                token_type: 'bearer',
+                user: {
+                  id: 'user123',
+                  email: 'test@example.com',
+                  app_metadata: {},
+                  user_metadata: {},
+                  aud: 'authenticated',
+                  created_at: '2025-04-18T00:00:00.000Z',
+                },
+              },
+            },
+            error: null,
+          })
+        ),
+        setSession: jasmine.createSpy('setSession').and.returnValue(Promise.resolve({})),
+        signOut: jasmine.createSpy('signOut').and.returnValue(Promise.resolve({})),
+      },
+      from: jasmine.createSpy('from').and.returnValue({
+        select: jasmine.createSpy('select').and.returnValue({
+          eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ data: [], error: null })),
+        }),
+        insert: jasmine.createSpy('insert').and.returnValue({
+          select: jasmine.createSpy('select').and.returnValue({
+            single: jasmine.createSpy('single').and.returnValue(Promise.resolve({ data: { id: 'message123' }, error: null })),
+          }),
+        }),
+        delete: jasmine.createSpy('delete').and.returnValue({
+          eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null })),
+        }),
+        update: jasmine.createSpy('update').and.returnValue({
+          eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null })),
+        }),
+      }),
+      rpc: jasmine.createSpy('rpc').and.returnValue(Promise.resolve({ data: [], error: null })),
+      functions: {
+        invoke: jasmine.createSpy('invoke').and.returnValue(Promise.resolve({ data: {}, error: null })),
+      },
+    };
 
-//   afterEach(() => {
-//     mockSupabaseClient.auth.signInAnonymously.calls.reset();
-//     cookieService.set.calls.reset();
-//   });
+    TestBed.configureTestingModule({
+      providers: [
+        SupabaseService,
+        { provide: CookieService, useValue: mockCookieService },
+        { provide: PLATFORM_ID, useValue: 'browser' },
+      ],
+    });
 
-//   it('应该正确创建服务', () => {
-//     expect(service).toBeTruthy();
-//   });
+    service = TestBed.inject(SupabaseService);
+    (service as any).supabase = mockSupabaseClient;
+  });
 
-//   describe('认证相关方法', () => {
-//     it('应该处理匿名登录', fakeAsync(() => {
-//       service.signInAnonymously().then(result => {
-//         expect(result.data.user!.id).toBe('anon-123');
-//         expect(cookieService.set).toHaveBeenCalled();
-//       });
-//       tick();
-//     }));
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
 
-//     it('应该处理密码登录', fakeAsync(() => {
-//       service.signInWithPassword({ email: 'test@test.com', password: 'password' })
-//         .then(result => {
-//           expect(result.data.session).toBeDefined();
-//           expect(cookieService.set).toHaveBeenCalledWith('sb:token', jasmine.any(String));
-//         });
-//       tick();
-//     }));
+  it('should sign in anonymously', async () => {
+    const result = await service.signInAnonymously();
+    expect(mockSupabaseClient.auth.signInAnonymously).toHaveBeenCalled();
+    if (result.data.user) {
+      expect(result.data.user.id).toBe('anon123');
+    } else {
+      fail('User should not be null');
+    }
+  });
 
-//     it('应该处理登出', fakeAsync(() => {
-//       service.signOut().then(() => {
-//         expect(mockSupabaseClient.auth.signOut).toHaveBeenCalled();
-//       });
-//       tick();
-//     }));
-//   });
+  it('should sign in with password', async () => {
+    const credentials = { email: 'test@example.com', password: 'password123' };
+    const result = await service.signInWithPassword(credentials);
 
-//   describe('会话管理', () => {
-//     it('应该保存匿名会话', fakeAsync(() => {
-//       service.saveAnonSession();
-//       tick();
-//       expect(cookieService.set).toHaveBeenCalledWith(
-//         'anonymous-session', 
-//         jasmine.any(String), 
-//         jasmine.any(Object)
-//       );
-//     }));
+    expect(mockSupabaseClient.auth.signInWithPassword).toHaveBeenCalledWith(credentials);
+    expect(mockCookieService.set).toHaveBeenCalledWith(
+      'sb:token',
+      JSON.stringify({
+        session: {
+          access_token: 'session123',
+          refresh_token: 'refresh123',
+          expires_in: 3600,
+          token_type: 'bearer',
+          user: {
+            id: 'user123',
+            email: 'test@example.com',
+            app_metadata: {},
+            user_metadata: {},
+            aud: 'authenticated',
+            created_at: '2025-04-18T00:00:00.000Z',
+          },
+        },
+      })
+    );
 
-//     it('应该检查存在的会话', fakeAsync(() => {
-//       cookieService.get.and.returnValue(JSON.stringify({}));
-//       service.checkAnonSession().then(result => {
-//         expect(result).toBeTrue();
-//       });
-//       tick();
-//     }));
-//     it('应该删除聊天', fakeAsync(() => {
-//         service['chatsSubject'].next([{ id: 'chat-1' }]); // 正确访问私有属性
-//         service.deleteChat('chat-1').then(() => {
-//           expect(service['chatsSubject'].getValue().length).toBe(0); // 正确访问私有属性
-//         });
-//         tick();
-//       }));
-//   });
+    if (result.data.session) {
+      expect(result.data.session).toEqual({
+        access_token: 'session123',
+        refresh_token: 'refresh123',
+        expires_in: 3600,
+        token_type: 'bearer',
+        user: {
+          id: 'user123',
+          email: 'test@example.com',
+          app_metadata: {},
+          user_metadata: {},
+          aud: 'authenticated',
+          created_at: '2025-04-18T00:00:00.000Z',
+        },
+      });
+    } else {
+      fail('Session should not be null');
+    }
+  });
 
-//   describe('聊天操作', () => {
-//     it('应该处理匿名登录', fakeAsync(() => {
-//         service.signInAnonymously().then(result => {
-//           expect(result.data.user!.id).toBe('anon-123'); // 添加非空断言
-//           expect(cookieService.set).toHaveBeenCalled();
-//         });
-//         tick();
-//       }));
-    
-//       it('应该获取用户聊天列表', fakeAsync(() => {
-//         service.getChatsForUser('user-123').then(data => {
-//           expect(data.length).toBe(0);
-//           expect(service['chatsSubject'].getValue()).toEqual([]); // 正确访问私有属性
-//         });
-//         tick();
-//       }));
-    
-//       it('应该创建新聊天', fakeAsync(() => {
-//         service.newChat('user-123').then(data => {
-//           expect(data).toBeDefined();
-//           expect(service['chatsSubject'].getValue().length).toBe(1); // 正确访问私有属性
-//         });
-//         tick();
-//       }));
-//   });
+  it('should get user', async () => {
+    const result = await service.getUser();
+    expect(mockSupabaseClient.auth.getUser).toHaveBeenCalled();
+    if (result.data.user) {
+      expect(result.data.user.id).toBe('user123');
+    } else {
+      fail('User should not be null');
+    }
+  });
 
-//   describe('消息处理', () => {
-//     it('应该发送问题', fakeAsync(() => {
-//       service.sendQuestion('chat-1', 'Test question').then(data => {
-//         expect(data).toBeDefined();
-//       });
-//       tick();
-//     }));
+  it('should get session', async () => {
+    const result = await service.getSession();
+    expect(mockSupabaseClient.auth.getSession).toHaveBeenCalled();
+    console.log('Session===============================:', result.data.session);
 
-//     it('应该监听消息变更', fakeAsync(() => {
-//       const callback = jasmine.createSpy('callback');
-//       const subscription = service.listenMessageChanges('msg-1', callback);
-//       expect(subscription).toBeDefined();
-//     }));
-//   });
+    if (result.data.session) {
+      expect(result.data.session).toEqual({
+        access_token: 'session123',
+        refresh_token: 'refresh123',
+        expires_in: 3600,
+        token_type: 'bearer',
+        user: {
+          id: 'user123',
+          email: 'test@example.com',
+          app_metadata: {},
+          user_metadata: {},
+          aud: 'authenticated',
+          created_at: '2025-04-18T00:00:00.000Z',
+        },
+      });
+    } else {
+      fail('Session should not be null');
+    }
+  });
 
-//   describe('反馈处理', () => {
-//     it('应该提交反馈', fakeAsync(() => {
-//       service.submitFeedback('msg-1', true, 'Good response').then(() => {
-//         expect(mockSupabaseClient.from).toHaveBeenCalledWith('messaggio');
-//       });
-//       tick();
-//     }));
-//   });
+  it('should set session', async () => {
+    const session = { id: 'session123' } as any;
+    await service.setSession(session);
+    expect(mockSupabaseClient.auth.setSession).toHaveBeenCalledWith(session);
+  });
 
-//   describe('分析功能', () => {
-//     it('应该获取消息分析数据', fakeAsync(() => {
-//       service.getAnalyzeTextMessages().then(data => {
-//         expect(data.averageWords).toBeDefined();
-//       });
-//       tick();
-//     }));
+  it('should sign out', async () => {
+    await service.signOut();
+    expect(mockSupabaseClient.auth.signOut).toHaveBeenCalled();
+  });
 
-//     it('应该获取反馈统计', fakeAsync(() => {
-//       service.getCountFeedbackMex().then(data => {
-//         expect(data.length).toBe(0);
-//       });
-//       tick();
-//     }));
-//   });
+  it('should get chats for user', async () => {
+    const userId = 'user123';
+    const result = await service.getChatsForUser(userId);
+    expect(mockSupabaseClient.from).toHaveBeenCalledWith('get_all_conversations');
+    expect(mockSupabaseClient.from().select).toHaveBeenCalledWith('*');
+    expect(mockSupabaseClient.from().select().eq).toHaveBeenCalledWith('utente', userId);
+    expect(result).toEqual([]);
+  });
 
-//   describe('错误处理', () => {
-//     it('应该处理获取用户错误', fakeAsync(() => {
-//       mockSupabaseClient.auth.getUser.and.rejectWith(new Error('Connection error'));
-//       spyOn(console, 'error');
-      
-//       service.getUser().catch(() => {
-//         expect(console.error).toHaveBeenCalled();
-//       });
-//       tick();
-//     }));
-//   });
-// });
+  it('should delete chat', async () => {
+    const chatId = 'chat123';
+    await service.deleteChat(chatId);
+    expect(mockSupabaseClient.from).toHaveBeenCalledWith('chat');
+    expect(mockSupabaseClient.from().delete).toHaveBeenCalled();
+    expect(mockSupabaseClient.from().delete().eq).toHaveBeenCalledWith('id', chatId);
+  });
+
+  it('should create a new chat', async () => {
+    const userId = 'user123';
+    const mockChatData = [{ id: 'chat123', utente: userId }];
+    mockSupabaseClient.from().insert().select.and.returnValue(Promise.resolve({ data: mockChatData, error: null }));
+    const initialChats = [{ id: 'chat456', utente: 'otherUser' }];
+    (service as any).chatsSubject = new BehaviorSubject(initialChats);
+    const result = await service.newChat(userId);
+
+    expect(mockSupabaseClient.from).toHaveBeenCalledWith('chat');
+    expect(mockSupabaseClient.from().insert).toHaveBeenCalledWith([{ utente: userId }]);
+    expect(mockSupabaseClient.from().insert().select).toHaveBeenCalledWith('*');
+    expect(result).toEqual(mockChatData);
+    const updatedChats = (service as any).chatsSubject.getValue();
+    expect(updatedChats).toEqual([...initialChats, ...mockChatData]);
+  });
+
+  it('should send a question', async () => {
+    const chatId = 'chat123';
+    const question = 'What is your name?';
+    const result = await service.sendQuestion(chatId, question);
+
+    expect(mockSupabaseClient.from).toHaveBeenCalledWith('messaggio');
+    expect(mockSupabaseClient.from().insert).toHaveBeenCalledWith([{ chat: chatId, domanda: question }]);
+    expect(mockSupabaseClient.from().insert().select).toHaveBeenCalled();
+    expect(mockSupabaseClient.from().insert().select().single).toHaveBeenCalled();
+    expect(result).toEqual({ id: 'message123' });
+  });
+
+  it('should submit feedback', async () => {
+    const messageId = 'message123';
+    const feedbackCheck = true;
+    const feedbackText = 'Great!';
+  
+    mockSupabaseClient.from.and.returnValue({
+      insert: jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: null })),
+    });
+  
+    await service.submitFeedback(messageId, feedbackCheck, feedbackText);
+    expect(mockSupabaseClient.from).toHaveBeenCalledWith('feedback');
+    expect(mockSupabaseClient.from().insert).toHaveBeenCalledWith([
+      {
+        messaggio: messageId,
+        feedback: 1,
+        feedback_text: feedbackText,
+      },
+    ]);
+  });
+
+  it('should get count of feedback messages', async () => {
+    const mockFeedbackData = [
+      { positive_feedback_mex: 10, negative_feedback_mex: 5, neutral_feedback_mex: 3 },
+    ];
+    mockSupabaseClient.rpc.and.returnValue(Promise.resolve({ data: mockFeedbackData, error: null }));
+
+    const result = await service.getCountFeedbackMex();
+
+    expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('get_number_of_feedback_messages');
+    expect(result).toEqual(mockFeedbackData);
+  });
+
+  it('should get count of feedbacks per week', async () => {
+    const mockFeedbackData = [
+      { week_number: 1, negative_feedback: 2, positive_feedback: 8 },
+    ];
+    mockSupabaseClient.rpc.and.returnValue(Promise.resolve({ data: mockFeedbackData, error: null }));
+
+    const result = await service.getCountFeedbacks();
+
+    expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('get_number_of_feedbacks');
+    expect(result).toEqual(mockFeedbackData);
+  });
+
+  it('should get count of messages per week', async () => {
+    const mockMessageData = [
+      { numberofweek: 1, numberofmessages: 50 },
+    ];
+    mockSupabaseClient.rpc.and.returnValue(Promise.resolve({ data: mockMessageData, error: null }));
+
+    const result = await service.getCountMessages();
+
+    expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('get_messages_per_week');
+    expect(result).toEqual(mockMessageData);
+  });
+
+  it('should analyze text messages', async () => {
+    const mockAnalysisData = {
+      averageWords: 5,
+      wordCounts: [
+        { word: 'hello', count: 10 },
+        { word: 'world', count: 8 },
+      ],
+    };
+    mockSupabaseClient.functions.invoke.and.returnValue(Promise.resolve({ data: mockAnalysisData, error: null }));
+
+    const result = await service.getAnalyzeTextMessages();
+
+    expect(mockSupabaseClient.functions.invoke).toHaveBeenCalledWith('analyzeMessages', { body: { foo: 'bar' } });
+    expect(result).toEqual(mockAnalysisData);
+  });
+
+  it('should get feedbacks', async () => {
+    const mockFeedbackData = [
+      { risposta: 'Yes', feedback_check: '0', feedback_text: 'Good' },
+      { risposta: 'No', feedback_check: '1', feedback_text: 'Bad' },
+    ];
+    mockSupabaseClient.rpc.and.returnValue(Promise.resolve({ data: mockFeedbackData, error: null }));
+
+    const result = await service.getFeedbacks();
+
+    expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('get_feedbacks');
+    expect(result).toEqual([
+      { risposta: 'Yes', type: true, text: 'Good' },
+      { risposta: 'No', type: false, text: 'Bad' },
+    ]);
+  });
+
+  it('should listen to message changes', async () => {
+    const messageId = 'message123';
+    const mockCallback = jasmine.createSpy('callback');
+    const mockSubscription = { unsubscribe: jasmine.createSpy('unsubscribe') } as unknown as RealtimeChannel;
+
+    mockSupabaseClient.channel = jasmine.createSpy('channel').and.returnValue({
+      on: jasmine.createSpy('on').and.returnValue({
+        subscribe: jasmine.createSpy('subscribe').and.returnValue({
+          unsubscribe: jasmine.createSpy('unsubscribe'),
+        }),
+      }),
+    });
+    mockSupabaseClient.channel.and.returnValue({
+      on: jasmine.createSpy('on').and.returnValue({
+        subscribe: jasmine.createSpy('subscribe').and.returnValue(mockSubscription),
+      }),
+    });
+
+    const result = await service.listenMessageChanges(messageId, mockCallback);
+
+    expect(mockSupabaseClient.channel).toHaveBeenCalledWith(`public:messaggio:id=eq.${messageId}`);
+    expect(mockSupabaseClient.channel().on).toHaveBeenCalledWith(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'messaggio', filter: `id=eq.${messageId}` },
+      mockCallback
+    );
+    expect(mockSupabaseClient.channel().on().subscribe).toHaveBeenCalled();
+    expect(result).toBe(mockSubscription);
+  });
+
+  it('should handle Supabase errors correctly', () => {
+    const alertSpy = spyOn(window, 'alert');
+    const onlineSpy = spyOnProperty(navigator, 'onLine', 'get');
+  
+    const error401 = { status: 401, code: 'PGRST301', message: 'JWT expired' };
+    (service as any).handleSupabaseError(error401);
+    expect(alertSpy).toHaveBeenCalledWith('ERRORE 401 | Supabase non è al momento raggiungibile');
+    alertSpy.calls.reset();
+  
+    const errorOffline = { status: 0, message: 'Network error' };
+    onlineSpy.and.returnValue(false); 
+    (service as any).handleSupabaseError(errorOffline);
+    expect(alertSpy).toHaveBeenCalledWith('ERRORE | Connessione internet non disponibile');
+    alertSpy.calls.reset();
+  
+    const unknownError = { status: 500, message: 'Internal server error' };
+    onlineSpy.and.returnValue(true); 
+    (service as any).handleSupabaseError(unknownError);
+    expect(alertSpy).toHaveBeenCalledWith('ERRORE 500 | Supabase non è al momento raggiungibile');
+  });
+
+  it('should test Supabase connection successfully', async () => {
+    mockSupabaseClient.from.and.returnValue({
+      select: jasmine.createSpy('select').and.returnValue(Promise.resolve({ error: null })),
+    });
+  
+    await (service as any).testSupabaseConnection();
+    expect(mockSupabaseClient.from).toHaveBeenCalledWith('chat');
+    expect(mockSupabaseClient.from().select).toHaveBeenCalledWith('*');
+  });
+  
+  it('should handle error during Supabase connection test', async () => {
+    spyOn(window, 'alert');
+    mockSupabaseClient.from.and.returnValue({
+      select: jasmine.createSpy('select').and.returnValue(Promise.resolve({ error: { message: 'Connection failed' } })),
+    });
+  
+    await (service as any).testSupabaseConnection();
+    expect(window.alert).toHaveBeenCalledWith('ERRORE | Connessione a Supabase non riuscita. Riprova più tardi.');
+  });
+
+  it('should save anonymous session', async () => {
+    const mockSession = {
+      data: {
+        session: {
+          access_token: 'session123',
+          refresh_token: 'refresh123',
+          expires_in: 3600,
+          token_type: 'bearer',
+          user: {
+            id: 'user123',
+            email: 'test@example.com',
+            app_metadata: {},
+            user_metadata: {},
+            aud: 'authenticated',
+            created_at: '2025-04-18T00:00:00.000Z',
+          },
+        },
+      },
+      error: null,
+    };
+    spyOn(service, 'getSession').and.returnValue(Promise.resolve(mockSession));
+
+    await service.saveAnonSession();
+
+    expect(mockCookieService.set).toHaveBeenCalledWith(
+      'anonymous-session',
+      JSON.stringify(mockSession.data.session),
+      { path: '/', secure: false, sameSite: 'Lax' }
+    );
+  });
+  
+  it('should check anonymous session and return true if session exists', async () => {
+    mockCookieService.get.and.returnValue(JSON.stringify({ id: 'anon-session' }));
+  
+    const result = await service.checkAnonSession();
+    expect(result).toBeTrue();
+    expect(mockCookieService.get).toHaveBeenCalledWith('anonymous-session');
+  });
+  
+  it('should check anonymous session and return false if session does not exist', async () => {
+    mockCookieService.get.and.returnValue('');
+  
+    const result = await service.checkAnonSession();
+    expect(result).toBeFalse();
+    expect(mockCookieService.get).toHaveBeenCalledWith('anonymous-session');
+  });
+
+  it('should unsubscribe from message changes', async () => {
+    const messageId = 'message123';
+    const mockCallback = jasmine.createSpy('callback');
+    const mockSubscription = { unsubscribe: jasmine.createSpy('unsubscribe') } as unknown as RealtimeChannel;
+  
+    mockSupabaseClient.channel = jasmine.createSpy('channel').and.returnValue({
+      on: jasmine.createSpy('on').and.returnValue({
+        subscribe: jasmine.createSpy('subscribe').and.returnValue(mockSubscription),
+      }),
+    });
+  
+    const subscription = await service.listenMessageChanges(messageId, mockCallback);
+    subscription.unsubscribe();
+  
+    expect(mockSubscription.unsubscribe).toHaveBeenCalled();
+  });
+
+  it('should return empty array if userId is empty in getChatsForUser', async () => {
+    const result = await service.getChatsForUser('');
+    expect(result).toEqual([]);
+  });
+
+  it('should handle error in submitFeedback', async () => {
+    mockSupabaseClient.from.and.returnValue({
+      insert: jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: { message: 'Insert failed' } })),
+    });
+  
+    spyOn(console, 'error');
+    await service.submitFeedback('message123', true, 'Great!');
+    expect(console.error).toHaveBeenCalledWith('Error submitting feedback:', { message: 'Insert failed' });
+  });
+
+
+  it('should handle error when saving anonymous session', async () => {
+    spyOn(service, 'getSession').and.throwError('Failed to get session');
+    spyOn(console, 'error');
+  
+    await service.saveAnonSession();
+    expect(console.error).toHaveBeenCalledWith('Error getting anonymous session', jasmine.any(Error));
+  });
+
+  it('should handle invalid JSON in anonymous session cookie', async () => {
+    mockCookieService.get.and.returnValue('invalid-json');
+    spyOn(console, 'error');
+  
+    const result = await service.checkAnonSession();
+    expect(result).toBeFalse();
+    expect(console.error).toHaveBeenCalledWith('Invalid anonymous session in cookie:', jasmine.any(SyntaxError));
+  });
+
+  it('should handle error when fetching chats for user', async () => {
+    mockSupabaseClient.from.and.returnValue({
+      select: jasmine.createSpy('select').and.returnValue({
+        eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ data: null, error: { message: 'Fetch failed' } })),
+      }),
+    });
+    spyOn(console, 'error');
+  
+    const result = await service.getChatsForUser('user123');
+    expect(result).toEqual([]);
+    expect(console.error).toHaveBeenCalledWith('Error fetching chats:', { message: 'Fetch failed' });
+  });
+
+  it('should handle error when deleting chat', async () => {
+    mockSupabaseClient.from.and.returnValue({
+      delete: jasmine.createSpy('delete').and.returnValue({
+        eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: { message: 'Delete failed' } })),
+      }),
+    });
+    spyOn(console, 'error');
+  
+    await service.deleteChat('chat123');
+    expect(console.error).toHaveBeenCalledWith('Error deleting chat:', { message: 'Delete failed' });
+  });
+
+  it('should handle error when creating new chat', async () => {
+    mockSupabaseClient.from.and.returnValue({
+      insert: jasmine.createSpy('insert').and.returnValue({
+        select: jasmine.createSpy('select').and.returnValue(Promise.resolve({ data: null, error: { message: 'Insert failed' } })),
+      }),
+    });
+    spyOn(console, 'error');
+  
+    const result = await service.newChat('user123');
+    expect(result).toBeNull();
+    expect(console.error).toHaveBeenCalledWith('Error creating chat:', { message: 'Insert failed' });
+  });
+
+  it('should handle error when sending question', async () => {
+    mockSupabaseClient.from.and.returnValue({
+      insert: jasmine.createSpy('insert').and.returnValue({
+        select: jasmine.createSpy('select').and.returnValue({
+          single: jasmine.createSpy('single').and.returnValue(Promise.resolve({ data: null, error: { message: 'Insert failed' } })),
+        }),
+      }),
+    });
+    spyOn(console, 'error');
+  
+    const result = await service.sendQuestion('chat123', 'What is your name?');
+    expect(result).toBeNull();
+    expect(console.error).toHaveBeenCalledWith('Error sending question:', { message: 'Insert failed' });
+  });
+
+  it('should handle error when getting feedbacks', async () => {
+    mockSupabaseClient.rpc.and.returnValue(Promise.resolve({ data: null, error: { message: 'Fetch failed' } }));
+    spyOn(console, 'error');
+  
+    const result = await service.getFeedbacks();
+    expect(result).toEqual([]);
+    expect(console.error).toHaveBeenCalledWith('Error fetching feedbacks:', { message: 'Fetch failed' });
+  }
+  );
+
+});
