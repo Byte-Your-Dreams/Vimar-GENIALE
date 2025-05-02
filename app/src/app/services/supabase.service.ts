@@ -224,14 +224,9 @@ export class SupabaseService{
     try {
       const feedbackBit = feedbackCheck ? 1 : 0;
       const { error } = await this.supabase
-        .from('feedback')
-        .insert([
-          {
-            messaggio: messageId,
-            feedback: feedbackBit,
-            feedback_text: feedbackText
-          }
-        ]);
+        .from('messaggio')
+        .update({ feedback_check: feedbackBit, feedback_text: feedbackText })
+        .eq('id', messageId);
 
       if (error) {
         console.error('Error submitting feedback:', error);

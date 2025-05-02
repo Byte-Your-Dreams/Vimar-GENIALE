@@ -259,18 +259,23 @@ describe('SupabaseService', () => {
     const feedbackText = 'Great!';
   
     mockSupabaseClient.from.and.returnValue({
-      insert: jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: null })),
+      update: jasmine.createSpy('update').and.returnValue({
+        eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
+      }),
     });
   
     await service.submitFeedback(messageId, feedbackCheck, feedbackText);
-    expect(mockSupabaseClient.from).toHaveBeenCalledWith('feedback');
-    expect(mockSupabaseClient.from().insert).toHaveBeenCalledWith([
-      {
-        messaggio: messageId,
-        feedback: 1,
-        feedback_text: feedbackText,
-      },
-    ]);
+    
+    expect(mockSupabaseClient.from).toHaveBeenCalledWith('messaggio');
+    
+    // Verifica che sia stato chiamato update con i parametri corretti
+    expect(mockSupabaseClient.from().update).toHaveBeenCalledWith({
+      feedback_check: 1,  
+      feedback_text: feedbackText
+    });
+    
+    // Verifica che sia stato chiamato eq con l'ID corretto
+    expect(mockSupabaseClient.from().update().eq).toHaveBeenCalledWith('id', messageId);
   });
 
   it('should get count of feedback messages', async () => {
@@ -481,14 +486,18 @@ describe('SupabaseService', () => {
     expect(result).toEqual([]);
   });
 
-  it('should handle error in submitFeedback', async () => {
+  it('should handle error in submitFeedback - simplified', async () => {
+    // Mock più semplice che restituisce direttamente l'errore
     mockSupabaseClient.from.and.returnValue({
-      insert: jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: { message: 'Insert failed' } })),
+      update: () => ({ 
+        eq: () => Promise.resolve({ error: { message: 'Update failed' } }) 
+      })
     });
   
     spyOn(console, 'error');
     await service.submitFeedback('message123', true, 'Great!');
-    expect(console.error).toHaveBeenCalledWith('Error submitting feedback:', { message: 'Insert failed' });
+    
+    expect(console.error).toHaveBeenCalledWith('Error submitting feedback:', { message: 'Update failed' });
   });
 
 
