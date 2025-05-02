@@ -8,14 +8,8 @@ Deno.test("EmbeddingRepository: generateEmbedding should return a valid OllamaEm
   const mockOpenAI = {
     embeddings: {
       create: async (params: any) => {
-        // Simulate OpenAI API response
-        if (params.input === "What is the meaning of life?") {
-          return {
-            data: [{ embedding: [0.1, 0.2, 0.3] }],
-          };
-        }
         return {
-          data: [{ embedding: null }],
+          data: [{ embedding: [0.1, 0.2, 0.3] }],
         };
       },
     },

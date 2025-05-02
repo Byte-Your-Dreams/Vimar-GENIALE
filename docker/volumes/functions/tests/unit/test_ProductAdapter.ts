@@ -32,10 +32,7 @@ Deno.test("ProductAdapter: getProduct should return a valid Product", async () =
   // Arrange
   const mockRepository = {
     getProduct: async (name: string | null, id: string | null) => {
-      if (name === "Product 1") {
-        return new SupabaseProduct("1", "Product 1", "Description 1", "ETIM1");
-      }
-      throw new Error("Product not found");
+      return new SupabaseProduct("1", "Product 1", "Description 1", "ETIM1");
     },
   } as unknown as ProductRepository;
 

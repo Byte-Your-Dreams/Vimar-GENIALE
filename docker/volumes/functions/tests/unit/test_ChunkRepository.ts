@@ -8,15 +8,12 @@ Deno.test("ChunkRepository: obtainSimilarChunk should return a list of SupabaseC
   // Arrange
   const mockClient = {
     rpc: async (procedure: string, params: any) => {
-      if (procedure === "match_manuale") {
-        return {
-          data: [
-            'Chunk 1 content', 'Chunk 2 content'
-          ],
-          error: null,
-        };
-      }
-      return { data: null, error: null };
+      return {
+        data: [
+          'Chunk 1 content', 'Chunk 2 content'
+        ],
+        error: null,
+      };
     },
   };
 

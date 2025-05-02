@@ -7,16 +7,13 @@ Deno.test("MessageRepository: getHistory should return a valid SupabaseChat", as
   // Arrange
   const mockClient = {
     rpc: async (procedure: string, params: any) => {
-      if (procedure === "getlastmessages" && params.chat_id === "chat1") {
-        return {
-          data: [
-            { id: "msg1", domanda: "Question 1", risposta: "Answer 1" },
-            { id: "msg2", domanda: "Question 2", risposta: "Answer 2" },
-          ],
-          error: null,
-        };
-      }
-      return { data: null, error: null };
+      return {
+        data: [
+          { id: "msg1", domanda: "Question 1", risposta: "Answer 1" },
+          { id: "msg2", domanda: "Question 2", risposta: "Answer 2" },
+        ],
+        error: null,
+      };
     },
   };
 

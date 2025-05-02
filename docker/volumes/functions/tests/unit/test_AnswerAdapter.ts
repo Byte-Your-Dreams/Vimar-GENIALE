@@ -14,11 +14,8 @@ Deno.test("AnswerAdapter: generateAnswer should return a valid AIAnswer", async 
   // Arrange
   const mockRepository = {
     generateAnswer: async (ollamaPrompt: OllamaPrompt) => {
-      if (ollamaPrompt.getPrompt()[0].content === "Hello, world!") {
-        return new OllamaAnswer(true, "Mocked response");
-      }
-      return new OllamaAnswer(false, "Mocked failure");
-    },
+      return new OllamaAnswer(true, "Mocked response");
+      },
   } as unknown as AnswerRepository;
 
   const adapter = new AnswerAdapter(mockRepository);

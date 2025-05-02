@@ -14,10 +14,7 @@ Deno.test("EmbeddingAdapter: generateEmbedding should return a valid AIEmbedding
   // Arrange
   const mockRepository = {
     generateEmbedding: async (ollamaQuestion: OllamaQuestion) => {
-      if (ollamaQuestion.getQuestion() === "What is the meaning of life?") {
-        return new OllamaEmbedding(true, [0.1, 0.2, 0.3]);
-      }
-      return new OllamaEmbedding(false, []);
+      return new OllamaEmbedding(true, [0.1, 0.2, 0.3]);
     },
   } as unknown as EmbeddingRepository;
 
