@@ -15,6 +15,8 @@ Progetto svolto dal gruppo **Byte Your Dreams** per il corso di Ingegneria del S
     ```
 3. Configurare il file **```docker/.env```**.  
 All'interno della cartella **```docker/```** è presente il file **```.env.example```** che fornisce degli esempi di variabili d'ambiente utilizzate. Prima di eseguire il deploy, modificare tali variabili e rinominare il file in **```.env```**.
+> Consultare il seguente link per la configurazione delle key: https://supabase.com/docs/guides/self-hosting/docker#securing-your-services.
+4. Configurare il file **```app/src/environments/environment.ts``` inserendo la ANON_KEY precedentemente impostata. **
 ### Avviare il sistema
 Una volta eseguiti i passaggi precedenti, per avviare il sistema, eseguire sul terminale:
 ```
