@@ -1,4 +1,6 @@
 # Vimar Geniale
+[![CI Status](https://github.com/Byte-Your-Dreams/Vimar-GENIALE/actions/workflows/ci.yml/badge.svg)](https://github.com/Byte-Your-Dreams/Vimar-GENIALE/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Byte-Your-Dreams/Vimar-GENIALE/branch/main/graph/badge.svg)](https://codecov.io/gh/Byte-Your-Dreams/Vimar-GENIALE)
 Progetto svolto dal gruppo **Byte Your Dreams** per il corso di Ingegneria del Software 2024-2025 - Università degli Studi di Padova.
 
 ## Installazione
