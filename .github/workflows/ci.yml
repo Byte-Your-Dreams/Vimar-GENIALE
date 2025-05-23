@@ -19,7 +19,7 @@ jobs:
           python-version: '3.12'
       - run: pip install -r requirements.txt
       - run: pip install coverage
-      - run: coverage run --branch -m unittest discover -s Vimar/tests/
+      - run: coverage run --branch -m unittest discover -s Vimar/tests/*/
       - run: coverage xml -o coverage_scraper.xml
       - uses: codecov/codecov-action@v4
         with:
