@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  scraper-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Scraper
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: coverage run --branch -m unittest discover -s Vimar/tests/
+      - run: coverage xml -o coverage_scraper.xml
+      - uses: codecov/codecov-action@v4
+        with:
+          files: Scraper/coverage_scraper.xml
+          flags: scraper
+          name: scraper
+
+  edge-functions-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+      - run: deno test --coverage=coverage ./docker/volumes/functions/tests/*/*.ts
+      - run: deno coverage coverage --lcov > coverage_edgefunctions.lcov
+      - uses: codecov/codecov-action@v4
+        with:
+          files: coverage_edgefunctions.lcov
+          flags: edge-functions
+          name: edge-functions
+
+  angular-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm install
+      - run: npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage
+      - uses: codecov/codecov-action@v4
+        with:
+          files: coverage/lcov.info
+          flags: angular
+          name: angular
