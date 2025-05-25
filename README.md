@@ -2,6 +2,7 @@
 [![CI Status](https://github.com/Byte-Your-Dreams/Vimar-GENIALE/actions/workflows/ci.yml/badge.svg)](https://github.com/Byte-Your-Dreams/Vimar-GENIALE/actions/workflows/ci.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/bdbda5f157eb483090e07a399d6b3870)](https://app.codacy.com/gh/Byte-Your-Dreams/Vimar-GENIALE/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![codecov](https://codecov.io/gh/Byte-Your-Dreams/Vimar-GENIALE/graph/badge.svg?token=Z2NZJT6O7O)](https://codecov.io/gh/Byte-Your-Dreams/Vimar-GENIALE)
+
 Progetto svolto dal gruppo **Byte Your Dreams** per il corso di Ingegneria del Software 2024-2025 - Università degli Studi di Padova.
 
 ## Installazione
