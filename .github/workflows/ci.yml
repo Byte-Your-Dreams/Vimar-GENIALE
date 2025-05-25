@@ -23,6 +23,7 @@ jobs:
       - run: coverage xml -o coverage_scraper.xml
       - uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: Scraper/coverage_scraper.xml
           flags: scraper
           name: scraper
@@ -39,6 +40,7 @@ jobs:
       - run: deno coverage coverage --lcov > coverage_edgefunctions.lcov
       - uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage_edgefunctions.lcov
           flags: edge-functions
           name: edge-functions
@@ -57,6 +59,7 @@ jobs:
       - run: npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage
       - uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info
           flags: angular
           name: angular
